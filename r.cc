@@ -429,6 +429,8 @@ int main() {
   sout << true;
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
 
+  // Quirk: doesn't read anything, because result is not saved.
+  // read_dec(stdin);
 #if 0
   int8_t i8 = read_dec(stdin);
   printf("i8=(%d)\n", i8);
