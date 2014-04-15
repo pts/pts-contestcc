@@ -419,8 +419,7 @@ static inline const FileObj &operator<<(const FileObj &fo, Flush) {
 
 // TODO(pts): Dumping: void operator~(const std::string &s) {}
 
-int main(int argc, char **argv) {
-  (void)argc; (void)argv;  // TODO(pts): Do we need this? int main() { ... }
+int main() {
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
 
 #if 0
