@@ -360,6 +360,10 @@ static inline const FileObj &operator<<(const FileObj &fo, const std::string &st
   fo.write(str.data(), str.size());
   return fo;
 }
+static inline const FileObj &operator<<(const FileObj &fo, bool v) {
+  fo.write(v ? "true" : "false");
+  return fo;
+}
 static inline const FileObj &operator<<(const FileObj &fo, int8_t v) {
   fo.write_dec((int64_t)v);
   return fo;
@@ -420,6 +424,7 @@ static inline const FileObj &operator<<(const FileObj &fo, Flush) {
 // TODO(pts): Dumping: void operator~(const std::string &s) {}
 
 int main() {
+  sout << true;
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
 
 #if 0
