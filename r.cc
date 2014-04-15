@@ -139,32 +139,32 @@ class DecReader {
 
 DecReader read_dec(FILE *f) { return DecReader(f); }
 
-class DecOutI8 {
+class DecInI8 {
  public:
-  DecOutI8(int8_t *p): p_(notnull(p)) {}
+  DecInI8(int8_t *p): p_(notnull(p)) {}
   int8_t *get() const { return p_; }
  private:
   int8_t *p_;
 };
-class DecOutI16 {
+class DecInI16 {
  public:
-  DecOutI16(int16_t *p): p_(notnull(p)) {}
+  DecInI16(int16_t *p): p_(notnull(p)) {}
   int16_t *get() const { return p_; }
  private:
   int16_t *p_;
 };
 
-static inline FILE *operator>>(FILE *f, const DecOutI8 &out) {
+static inline FILE *operator>>(FILE *f, const DecInI8 &out) {
   read_dec(f, out.get());
   return f;
 }
-static inline FILE *operator>>(FILE *f, const DecOutI16 &out) {
+static inline FILE *operator>>(FILE *f, const DecInI16 &out) {
   read_dec(f, out.get());
   return f;
 }
 
-DecOutI8  dec(int8_t  *p) { return p; }
-DecOutI16 dec(int16_t *p) { return p; }
+DecInI8  dec(int8_t  *p) { return p; }
+DecInI16 dec(int16_t *p) { return p; }
 
 Status read_literal(FILE *f, const char *msg, uintptr_t size) {
   for (; size > 0; ++msg, --size) {
@@ -179,10 +179,10 @@ Status read_literal(FILE *f, const char *msg, uintptr_t size) {
   return true;
 }
 
-class LiteralOut {
+class LiteralIn {
  public:
-  LiteralOut(const char *msg, uintptr_t size): msg_(msg), size_(size) {}
-  LiteralOut(const char *msg): msg_(msg), size_(strlen(msg)) {}
+  LiteralIn(const char *msg, uintptr_t size): msg_(msg), size_(size) {}
+  LiteralIn(const char *msg): msg_(msg), size_(strlen(msg)) {}
   Status read(FILE *f) const { return read_literal(f, msg_, size_); }
  private:
   const char * const msg_;  // Owned externally.
@@ -190,12 +190,13 @@ class LiteralOut {
 };
 
 // TODO(pts): Move literal, dec etc. to a namespace.
-LiteralOut literal(const char *msg) { return msg; }
-LiteralOut literal(const char *msg, uintptr_t size) {
-  return LiteralOut(msg, size);
+// TODO(pts): Add line(&str);
+LiteralIn literal(const char *msg) { return msg; }
+LiteralIn literal(const char *msg, uintptr_t size) {
+  return LiteralIn(msg, size);
 }
 
-static inline FILE *operator>>(FILE *f, const LiteralOut &out) {
+static inline FILE *operator>>(FILE *f, const LiteralIn &out) {
   out.read(f);
   return f;
 }
@@ -211,10 +212,25 @@ Status peek_nows(FILE *f) {
   return true;
 }
 
-class NowsOut {};
-extern NowsOut nows;
+class NowsIn {};
+extern NowsIn nows;
 
-static inline FILE *operator>>(FILE *f, NowsOut) { peek_nows(f); return f; }
+static inline FILE *operator>>(FILE *f, NowsIn) { peek_nows(f); return f; }
+
+// Check that next character is not a whitespace.
+Status peek_eof(FILE *f) {
+  const int c = getc(f);
+  if (c >= 0) {
+    ungetc(c, f);
+    return "Expected EOF.";
+  }
+  return true;
+}
+
+class EofIn {};
+extern EofIn eof;
+
+static inline FILE *operator>>(FILE *f, EofIn) { peek_eof(f); return f; }
 
 // --- Float formatting.
 
@@ -411,5 +427,6 @@ int main(int argc, char **argv) {
   printf("a=(%s)\n", a.c_str());
   std::string b = read_word(stdin);
   printf("b=(%s)\n", b.c_str());
+  stdin >> literal("\n") >> eof;
   return 0;
 }
