@@ -399,7 +399,6 @@ int main() {
   printf("i8=(%d)\n", i8);
 #endif
   // float f = DecReader(stdin);  // Ambiguous conversion, doesn't compile.
-  // TODO(pts): Add type-safe printf, long long.
   printf("i16=(%d)\n", i16);
   std::string a;
   if (!read_word(stdin, &a)) die("No word.");
