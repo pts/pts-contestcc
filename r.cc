@@ -2,10 +2,13 @@
 // C++ disadvantage: no stack trace
 // C++ disadvantage: no unliminted ints by default
 // C++ disadvantage: no easy int overflow detection
+// C++ disadvantage: uninitialized variables (there is a warning)
+// C++ disadvantage: no automatic memory management (not a big problem)
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <string>
 
@@ -57,6 +60,8 @@ std::string read_word(FILE *f) {
   return result;
 }
 
+// Ignores optional whitespace in front of the number.
+//
 // TODO(pts): Implement unsigned version.
 Status read_dec(FILE *f, int nbytes, int64_t *out) {
   bool is_neg = false;
@@ -118,14 +123,81 @@ class DecReader {
 
 DecReader read_dec(FILE *f) { return DecReader(f); }
 
+class DecOutI8 {
+ public:
+  DecOutI8(int8_t *p): p_(p) {}  // TODO(pts): CHECK_NOTNULL(p).
+  int8_t *get() const { return p_; }
+ private:
+  int8_t *p_;
+};
+class DecOutI16 {
+ public:
+  DecOutI16(int16_t *p): p_(p) {}  // TODO(pts): CHECK_NOTNULL(p).
+  int16_t *get() const { return p_; }
+ private:
+  int16_t *p_;
+};
+
+FILE *operator>>(FILE *f, const DecOutI8 &out) {
+  read_dec(f, out.get());
+  return f;
+}
+FILE *operator>>(FILE *f, const DecOutI16 &out) {
+  read_dec(f, out.get());
+  return f;
+}
+
+DecOutI8  dec(int8_t  *p) { return p; }
+DecOutI16 dec(int16_t *p) { return p; }
+
+Status read_literal(FILE *f, const char *msg, intptr_t size) {
+  for (; size > 0; ++msg, --size) {
+    int c = getc(f);
+    // TODO(pts): Report what literal (msg0).
+    if (c < 0) return "EOF when reading literal.";
+    if ((char)c != msg[0]) {
+      ungetc(c, f);
+      return "Unexpected input when reading literal.";
+    }
+  }
+  return true;
+}
+
+class LiteralOut {
+ public:
+  LiteralOut(const char *msg, intptr_t size): msg_(msg), size_(size) {}
+  LiteralOut(const char *msg): msg_(msg), size_(strlen(msg)) {}
+  Status read(FILE *f) const { return read_literal(f, msg_, size_); }
+ private:
+  const char * const msg_;  // Owned externally.
+  const intptr_t size_;
+};
+
+// TODO(pts): Move literal, dec etc. to a namespace.
+LiteralOut literal(const char *msg) { return msg; }
+LiteralOut literal(const char *msg, intptr_t size) {
+  return LiteralOut(msg, size);
+}
+
+FILE *operator>>(FILE *f, const LiteralOut &out) { out.read(f); return f; }
+
 // TODO(pts): Dumping: void operator~(const std::string &s) {}
 
 int main(int argc, char **argv) {
   (void)argc; (void)argv;
+#if 0
   int8_t i8 = read_dec(stdin);
-  printf("i8=(%d)\n", i8);  // TODO(pts): Add type-safe printf, long long.
+  printf("i8=(%d)\n", i8);
   int16_t i16 = read_dec(stdin);
+#else
+  int8_t i8;
+  int16_t i16;
+  // stdin >> dec(&i8) >> dec(&i16);  // Has error handling.
+  stdin >> dec(&i8) >> literal(",") >> dec(&i16);
+  printf("i8=(%d)\n", i8);
+#endif
   // float f = DecReader(stdin);  // Ambiguous conversion, doesn't compile.
+  // TODO(pts): Add type-safe printf, long long.
   printf("i16=(%d)\n", i16);
   std::string a;
   if (!read_word(stdin, &a)) die("No word.");
