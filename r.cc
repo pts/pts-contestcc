@@ -295,6 +295,8 @@ static inline const FileObj &operator>>(const FileObj &f, EofIn) {
   peek_eof(f.f()); return f;
 }
 
+// TODO(pts): Added reading bool (can't ungetc fully).
+
 // --- Float formatting.
 
 // TODO(pts): Also for long double.
