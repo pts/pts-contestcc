@@ -425,7 +425,7 @@ int main() {
 #if 0
   int8_t i8 = read_dec(stdin);
   printf("i8=(%d)\n", i8);
-  int16_t i16 = read_dec(stdin);
+  int16_t i16 = read_dec(stdin);  // Polymorphic, does proper bounds checking.
 #else
   int8_t i8;
   int16_t i16;
@@ -441,6 +441,6 @@ int main() {
   printf("a=(%s)\n", a.c_str());
   std::string b = read_word(stdin);
   printf("b=(%s)\n", b.c_str());
-  stdin >> literal("\n") >> eof;
+  stdin >> literal("\n") >> eof;  // Doesn't compile without literal(...).
   return 0;
 }
