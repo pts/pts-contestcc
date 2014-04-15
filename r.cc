@@ -17,7 +17,7 @@ void die(const char *msg) {
   exit(1);
 }
 
-static inline bool is_space(int c) {
+static inline bool is_whitespace(int c) {
   return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
 
@@ -45,11 +45,11 @@ class Status {
 
 Status read_word(FILE *f, std::string *out) {
   int c;
-  while (is_space(c = getc(f))) {}
+  while (is_whitespace(c = getc(f))) {}
   if (c < 0) return "EOF when reading word.";
   out->clear();
   out->push_back(c);
-  for (; !is_space(c = getc(f)); out->push_back(c)) {}
+  for (; !is_whitespace(c = getc(f)); out->push_back(c)) {}
   if (c >= 0) ungetc(c, f);
   return true;
 }
@@ -66,7 +66,7 @@ std::string read_word(FILE *f) {
 Status read_dec(FILE *f, int nbytes, int64_t *out) {
   bool is_neg = false;
   int c;
-  while ((c = getc(f)) >= 0 && is_space(c)) {}
+  while ((c = getc(f)) >= 0 && is_whitespace(c)) {}
   if (c == '-') {
     is_neg = true;
     c = getc(f);
@@ -181,6 +181,23 @@ LiteralOut literal(const char *msg, intptr_t size) {
 
 FILE *operator>>(FILE *f, const LiteralOut &out) { out.read(f); return f; }
 
+// Check that next character is not a whitespace.
+Status peek_nows(FILE *f) {
+  const int c = getc(f);
+  if (c >= 0) {
+    const bool is_ws = is_whitespace(c);
+    ungetc(c, f);
+    if (is_ws) return "Unexpected whitespace.";
+  }
+  return true;
+}
+
+class NowsOut {};
+NowsOut nows;
+
+FILE *operator>>(FILE *f, NowsOut) { peek_nows(f); return f; }
+
+
 // TODO(pts): Dumping: void operator~(const std::string &s) {}
 
 int main(int argc, char **argv) {
@@ -193,7 +210,8 @@ int main(int argc, char **argv) {
   int8_t i8;
   int16_t i16;
   // stdin >> dec(&i8) >> dec(&i16);  // Has error handling.
-  stdin >> dec(&i8) >> literal(",") >> dec(&i16);
+  stdin >> dec(&i8) >> literal(",") >> nows >> dec(&i16);
+  // TODO(pts): stdin >> dec(&i8) >> "," >> nows >> dec(&i16) >> "\n" >> eof;
   printf("i8=(%d)\n", i8);
 #endif
   // float f = DecReader(stdin);  // Ambiguous conversion, doesn't compile.
