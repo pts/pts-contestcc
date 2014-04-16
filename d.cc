@@ -95,6 +95,27 @@ const Writable &operator<<(const StringWritable &wr, const Dumper<T> &d) {
   return wr;
 }
 
+template<class T>class Formatter {
+  // TODO(pts): Make it a compile error not to override.
+  void format(Writable *wr);  // Never implemented.
+};
+
+template<>class Formatter<const char*> {
+ public:
+  Formatter(const char *msg): msg_(msg) {}
+  void format(Writable *wr) const {
+    wr->vi_write(msg_, strlen(msg_));
+  }
+ private:
+  const char *msg_;
+};
+
+template<class T>
+const Writable &operator<<(const StringWritable &wr, const Formatter<T> &f) {
+  f.format(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
+  return wr;
+}
+
 int main() {
   int a[3] = {55, 66, 77};
   std::vector<int> b;
@@ -108,6 +129,9 @@ int main() {
 
   // TODO(pts): stdout << dump(42) << "\n";
   std::string s; s << dump(42) << dump(-5);  // !! << ".";
+  s << Formatter<const char*>(";.");  // Works.
+  // s << Formatter(";.");  // Doesn't compile.
+  // s << ";.";  // SUXX: doesn't compile, no implicit conversion.
   printf("<%s>\n", s.c_str());
   stdout << dump(42) << dump(-6);
   printf("\n");
