@@ -62,7 +62,7 @@ template<class T>class Dumper {
   Dumper(const T &t): is_dumped_(false), t_(t) {}
   ~Dumper() {
     if (!is_dumped_) {
-      // TODO(pts): Dump without flushing?
+      // TODO(pts): Dump without autoflushing stderr.
       FileObj fwstderr(stderr);  // TODO(pts): Do it without creating a variable.
       dump(&fwstderr);
       putc('\n', stderr);
@@ -78,6 +78,13 @@ template<class T>class Dumper {
 };
 
 template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
+template<class T>void dump(const char *msg, const T &t) {
+  // TODO(pts): Dump without autoflushing stderr.
+  fputs(msg, stderr);
+  FileObj fwstderr(stderr);
+  wrdump(&fwstderr, t);
+  putc('\n', stderr);
+}
 
 template<class T>struct Formatter<Dumper<T> > {
   FORMATTER_COMMON_DECLS
@@ -97,6 +104,7 @@ int main() {
   dump(-42);
   dump(a);
   dump(b);
+  dump("Answer: ", 42);
 
   // TODO(pts): stdout << dump(42) << "\n";
   std::string s; s << dump(42) << dump(-5);  // !! << ".";
