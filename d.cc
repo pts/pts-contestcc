@@ -103,23 +103,28 @@ template<class T>class Formatter {};
 //template<class T>class Dummy {};
 //template<>class Dummy<const char*> { public: typedef int t; };
 
-template<>class Formatter<char*> {
- public:
-  typedef const Writable &return_type;
-  static void format(Writable *wr, const char *msg) {
-    wr->vi_write(msg, strlen(msg));
-  }
-};
+#define DEFINE_FORMATTER(type, argtype) \
+    template<>struct Formatter<type> { \
+      typedef const Writable &return_type; \
+      static void format(Writable *wr, argtype); \
+    };
+#define DEFINE_FORMATTER_PTR(type) DEFINE_FORMATTER(type*, type const*)
+#define DEFINE_FORMATTER_REF(type) DEFINE_FORMATTER(type, type const&)
+#define DEFINE_FORMATTER_COPY(type) DEFINE_FORMATTER(type, type)
 
-template<>class Formatter<int> {
- public:
-  typedef const Writable &return_type;
-  static void format(Writable *wr, int v) {
-    char tmp[sizeof(int) * 3 + 1];
-    sprintf(tmp, "%d", v);
-    wr->vi_write(tmp, strlen(tmp));
-  }
-};
+DEFINE_FORMATTER_PTR(char);
+DEFINE_FORMATTER_COPY(int);
+
+// Prepending `template<>' would prevent this from compiling.
+void Formatter<char*>::format(Writable *wr, const char *msg) {
+  wr->vi_write(msg, strlen(msg));
+}
+
+void Formatter<int>::format(Writable *wr, int v) {
+  char tmp[sizeof(int) * 3 + 1];
+  sprintf(tmp, "%d", v);
+  wr->vi_write(tmp, strlen(tmp));
+}
 
 // TODO(pts): Make these fewer.
 //
