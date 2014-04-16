@@ -7,6 +7,8 @@
 // C++ disadvantage: no regexps (not a problem most of the time)
 
 #include "r_status.h"
+#include "r_fileobj.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -109,58 +111,6 @@ class DecReader {
 DecReader read_dec(FILE *f) { return DecReader(f); }
 
 // ---
-
-class FileObj {
- public:
-  FileObj(FILE *f): f_(assume_notnull(f)) {}
-  FILE *f() const { return f_; }
-  operator FILE*() { return f_; }
-  Status flush() const {
-    return fflush(f_) == 0;
-  }
-  // TODO(pts): move to write(FILE *f, ...)?
-  Status write(const void *p, uintptr_t size) const {
-    return fwrite(p, 1, size, f_) == size;
-  }
-  Status write(const char *msg) const {
-    return write(msg, strlen(msg));
-  }
-  // TODO(pts): Don't inline write_dec.
-  // TODO(pts): Add int32_t.
-  Status write_dec(int64_t v) const {
-    char buf[21], *p = buf, *q, c;
-    if (v < 0) {
-      *p++ = '-';
-      v = -v;
-    }
-    q = p;
-    do { *q++ = v % 10 + '0'; v /= 10; } while (v > 0);
-    *q-- = '\0';
-    while (p < q) {  // Reverse.
-      c = *p;
-      *p++ = *q;
-      *q-- = c;
-    }
-    return write(buf);
-  }
-  Status write_dec(uint64_t v) const {
-    char buf[20], *p = buf, *q, c;
-    q = p;
-    do { *q++ = v % 10 + '0'; v /= 10; } while (v > 0);
-    *q-- = '\0';
-    while (p < q) {  // Reverse.
-      c = *p;
-      *p++ = *q;
-      *q-- = c;
-    }
-    return write(buf);
-  }
-  // TODO(pts): Implement write_hex etc.
-
-  // Most convenience functions are in `>>'.
- private:
-  FILE *f_;  // Owned externally.
-};
 
 class DecInI8 {
  public:
@@ -321,6 +271,40 @@ FileObj sin(stdin);
 //   fflush(sout);
 FileObj sout(stdout);
 FileObj serr(stderr);
+
+// TODO(pts): Don't inline write_dec.
+// TODO(pts): Add int32_t.
+Status write_dec(const FileObj *fo, int64_t v) {
+  char buf[21], *p = buf, *q, c;
+  if (v < 0) {
+    *p++ = '-';
+    v = -v;
+  }
+  q = p;
+  do { *q++ = v % 10 + '0'; v /= 10; } while (v > 0);
+  *q-- = '\0';
+  while (p < q) {  // Reverse.
+    c = *p;
+    *p++ = *q;
+    *q-- = c;
+  }
+  return fo->write(buf);
+}
+
+Status write_dec(const FileObj *fo, uint64_t v) {
+  char buf[20], *p = buf, *q, c;
+  q = p;
+  do { *q++ = v % 10 + '0'; v /= 10; } while (v > 0);
+  *q-- = '\0';
+  while (p < q) {  // Reverse.
+    c = *p;
+    *p++ = *q;
+    *q-- = c;
+  }
+  return fo->write(buf);
+}
+// TODO(pts): Implement write_hex etc.
+
 // io << stdout << "Hello!\n";
 static inline FileObj operator<<(Io, FILE *f) { return f; }
 // io >> stdin >> literal(",");
@@ -339,35 +323,35 @@ static inline const FileObj &operator<<(const FileObj &fo, bool v) {
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, int8_t v) {
-  fo.write_dec((int64_t)v);
+  write_dec(&fo, (int64_t)v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, int16_t v) {
-  fo.write_dec((int64_t)v);
+  write_dec(&fo, (int64_t)v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, int32_t v) {
-  fo.write_dec((int64_t)v);
+  write_dec(&fo, (int64_t)v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, int64_t v) {
-  fo.write_dec(v);
+  write_dec(&fo, v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, uint8_t v) {
-  fo.write_dec((uint64_t)v);
+  write_dec(&fo, (uint64_t)v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, uint16_t v) {
-  fo.write_dec((uint64_t)v);
+  write_dec(&fo, (uint64_t)v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, uint32_t v) {
-  fo.write_dec((uint64_t)v);
+  write_dec(&fo, (uint64_t)v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, uint64_t v) {
-  fo.write_dec(v);
+  write_dec(&fo, v);
   return fo;
 }
 static inline const FileObj &operator<<(const FileObj &fo, float v) {
