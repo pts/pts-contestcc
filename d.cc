@@ -95,14 +95,19 @@ const Writable &operator<<(const StringWritable &wr, const Dumper<T> &d) {
   return wr;
 }
 
-template<class T>class Formatter {
-  // TODO(pts): Make it a compile error not to override.
-  void format(Writable *wr);  // Never implemented.
-};
+template<class T>class Formatter {};
+//  // TODO(pts): Make it a compile error not to override.
+//  void format(Writable *wr);  // Never implemented.
+//};
 
-template<>class Formatter<const char*> {
+//template<class T>class Dummy {};
+//template<>class Dummy<const char*> { public: typedef int t; };
+
+template<>class Formatter<char*> {
  public:
+  typedef const Writable &return_type;
   Formatter(const char *msg): msg_(msg) {}
+  // TODO(pts): Move to the .cc file.
   void format(Writable *wr) const {
     wr->vi_write(msg_, strlen(msg_));
   }
@@ -110,13 +115,57 @@ template<>class Formatter<const char*> {
   const char *msg_;
 };
 
+template<>class Formatter<int> {
+ public:
+  typedef const Writable &return_type;
+  Formatter(int v): v_(v) {}
+  void format(Writable *wr) const {
+    char tmp[sizeof(int) * 3 + 1];
+    sprintf(tmp, "%d", v_);
+    wr->vi_write(tmp, strlen(tmp));
+  }
+ private:
+  int v_;
+};
+
+// TODO(pts): Make these fewer.
+//
+// Formatter<T>::return_type is tricky here, because that's not defined for
+// types T without a Formatter<T>, so the compiler will just silently skip
+// over this template function.
 template<class T>
-const Writable &operator<<(const StringWritable &wr, const Formatter<T> &f) {
-  f.format(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T>::return_type operator<<(const StringWritable &wr, const T &f) {
+  Formatter<T>(f).format(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
+  return wr;
+}
+template<class T>
+typename Formatter<T*>::return_type operator<<(const StringWritable &wr, const T *f) {
+  Formatter<T*>(f).format(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
+  return wr;
+}
+template<class T>
+typename Formatter<T>::return_type operator<<(const FileObj &wr, const T &f) {
+  Formatter<T>(f).format(const_cast<FileObj*>(&wr));  // TODO(pts): Fix const_cast.
+  return wr;
+}
+template<class T>
+typename Formatter<T*>::return_type operator<<(const FileObj &wr, const T *f) {
+  Formatter<T*>(f).format(const_cast<FileObj*>(&wr));  // TODO(pts): Fix const_cast.
+  return wr;
+}
+template<class T>
+typename Formatter<T>::return_type operator<<(const Writable &wr, const T &f) {
+  Formatter<T>(f).format(const_cast<Writable*>(&wr));  // TODO(pts): Fix const_cast.
+  return wr;
+}
+template<class T>
+typename Formatter<T*>::return_type operator<<(const Writable &wr, const T *f) {
+  Formatter<T*>(f).format(const_cast<Writable*>(&wr));  // TODO(pts): Fix const_cast.
   return wr;
 }
 
 int main() {
+  char const *msg = "Bye";
   int a[3] = {55, 66, 77};
   std::vector<int> b;
   b.resize(3);
@@ -129,11 +178,16 @@ int main() {
 
   // TODO(pts): stdout << dump(42) << "\n";
   std::string s; s << dump(42) << dump(-5);  // !! << ".";
-  s << Formatter<const char*>(";.");  // Works.
+  // s << Formatter<const char*>(";.");  // Works.
   // s << Formatter(";.");  // Doesn't compile.
-  // s << ";.";  // SUXX: doesn't compile, no implicit conversion.
+  s << ";." << "x" << msg << -42 << msg;
+  // s << 12.34;
   printf("<%s>\n", s.c_str());
-  stdout << dump(42) << dump(-6);
+  // Unfortunately, `stdout << "HI"' will never compile, because both sides
+  // of `<<` are basic types, so `operator<<' declarations are not
+  // considered.
+  FileObj(stdout) << "HI:" << dump(42) << dump(-6);
+  stdout << dump(-7) << dump(-89);
   printf("\n");
 
   return 0;

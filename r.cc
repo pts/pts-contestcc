@@ -19,7 +19,7 @@
 // For eGlibc, math.h defines this, for uClibc, it doesn't.
 // #define NAN (__builtin_nanf (""))
 
-template <typename T, unsigned S>
+template <typename T, uintptr_t S>
 inline unsigned arraysize(const T (&)[S]) { return S; }
 
 static inline bool is_whitespace(int c) {
