@@ -1,3 +1,4 @@
+#include "r_stringwritable.h"
 #include "r_shiftout.h"
 #include "r_fileobj.h"
 #include "r_basic_formatters.h"
@@ -8,21 +9,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-class StringWritable: public Writable {
- public:
-  // This is needed for convenience in s << dump(42).
-  StringWritable(std::string &str): str_(&str) {}
-  StringWritable(std::string *str): str_(assume_notnull(str)) {}
-  virtual void vi_write(const void *p, uintptr_t size) {
-    str_->append(static_cast<const char *>(p), size);
-  }
-  virtual void vi_putc(char c) {
-    str_->push_back(c);
-  }
- private:
-  std::string *str_;
-};
-
+// TODO(pts): Add dumping of more types.
 void wrdump(Writable *wr, bool b) {
   const char *msg = b ? "true" : "false";
   wr->vi_write(msg, strlen(msg));
