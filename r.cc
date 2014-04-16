@@ -146,6 +146,7 @@ class FileObj {
  public:
   FileObj(FILE *f): f_(assume_notnull(f)) {}
   FILE *f() const { return f_; }
+  operator FILE*() { return f_; }
   Status flush() const {
     return fflush(f_) == 0;
   }
@@ -346,7 +347,10 @@ class Io {};
 extern Io io;
 
 FileObj sin(stdin);
-// sout << "Hello\n";
+// Any of these work:
+//
+//   sout << "Hello\n";
+//   fflush(sout);
 FileObj sout(stdout);
 FileObj serr(stderr);
 // io << stdout << "Hello!\n";
@@ -427,8 +431,8 @@ static inline const FileObj &operator<<(const FileObj &fo, Flush) {
 
 int main() {
   sout << true;
+  fflush(sout);
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
-
   // Quirk: doesn't read anything, because result is not saved.
   // read_dec(stdin);
 #if 0
