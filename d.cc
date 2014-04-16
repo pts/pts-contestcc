@@ -55,41 +55,79 @@ template<typename T>void wrdump(Writable *wr, const std::vector<T> a) {
   wrdump(wr, a.data(), a.size());
 }
 
-// TODO(pts): Don't create a Dumper class instance per type, reduce
-// generated code bloat.
+template<typename T>void dump_buffnl(FILE *f, const T &t) {
+  std::string out;
+  StringWritable swout(&out);
+  wrdump(&swout, t);
+  out.push_back('\n');
+  Status(fwrite(out.data(), 1, out.size(), f) == out.size());
+}
+
+// TODO(pts): Try to unify t_ and is_dumped_ using NULL.
 template<class T>class Dumper {
  public:
   Dumper(const T &t): is_dumped_(false), t_(t) {}
   ~Dumper() {
-    if (!is_dumped_) {
-      // TODO(pts): Dump without autoflushing stderr.
-      FileObj fwstderr(stderr);  // TODO(pts): Do it without creating a variable.
-      dump(&fwstderr);
-      putc('\n', stderr);
-    }
+    if (!is_dumped_) dump_buffnl(stderr, t_);
   }
-  void dump(Writable *wr) const {
+  const T &release() const {
     is_dumped_ = true;
-    wrdump(wr, t_);
+    return t_;
   }
  private:
   mutable bool is_dumped_;
   const T &t_;
 };
 
-template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
 template<class T>void dump(const char *msg, const T &t) {
-  // TODO(pts): Dump without autoflushing stderr.
-  fputs(msg, stderr);
-  FileObj fwstderr(stderr);
-  wrdump(&fwstderr, t);
-  putc('\n', stderr);
+  std::string out(msg);
+  // Buffering to a string to reduce stderr autoflush problems.
+  StringWritable swout(&out);
+  wrdump(&swout, t);
+  out.push_back('\n');
+  Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
+template<class T1, class T2>void dump(const char *msg, const T1 &t1, const T2 &t2) {
+  std::string out(msg);
+  StringWritable swout(&out);
+  wrdump(&swout, t1);
+  out.append(", ");
+  wrdump(&swout, t2);
+  out.push_back('\n');
+  Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
+}
+template<class T1, class T2, class T3>void dump(const char *msg, const T1 &t1, const T2 &t2, const T3 &t3) {
+  std::string out(msg);
+  StringWritable swout(&out);
+  wrdump(&swout, t1);
+  out.append(", ");
+  wrdump(&swout, t2);
+  out.append(", ");
+  wrdump(&swout, t3);
+  out.push_back('\n');
+  Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
+}
+template<class T1, class T2, class T3, class T4>void dump(const char *msg, const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4) {
+  std::string out(msg);
+  StringWritable swout(&out);
+  wrdump(&swout, t1);
+  out.append(", ");
+  wrdump(&swout, t2);
+  out.append(", ");
+  wrdump(&swout, t3);
+  out.append(", ");
+  wrdump(&swout, t4);
+  out.push_back('\n');
+  Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
+}
+// TODO(pts): Add even more arguments (T5, T6 etc.).
+
+template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
 
 template<class T>struct Formatter<Dumper<T> > {
   FORMATTER_COMMON_DECLS
   static inline void format(Writable *wr, const Dumper<T> &d) {
-    d.dump(wr);
+    wrdump(wr, d.release());
   }
 };
 
@@ -105,6 +143,7 @@ int main() {
   dump(a);
   dump(b);
   dump("Answer: ", 42);
+  dump("Foo: ", 7, 6, 5);
 
   // TODO(pts): stdout << dump(42) << "\n";
   std::string s; s << dump(42) << dump(-5);  // !! << ".";

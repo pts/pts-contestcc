@@ -22,6 +22,7 @@ class FileObj: public Writable {
   }
   // TODO(pts): move to write(FILE *f, ...)?
   Status write(const void *p, uintptr_t size) const {
+    // TODO(pts): Add proper error message. (Also elsewhere.)
     return fwrite(p, 1, size, f_) == size;
   }
   Status write(const char *msg) const {
