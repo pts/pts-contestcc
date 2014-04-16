@@ -106,26 +106,19 @@ template<class T>class Formatter {};
 template<>class Formatter<char*> {
  public:
   typedef const Writable &return_type;
-  Formatter(const char *msg): msg_(msg) {}
-  // TODO(pts): Move to the .cc file.
-  void format(Writable *wr) const {
-    wr->vi_write(msg_, strlen(msg_));
+  static void format(Writable *wr, const char *msg) {
+    wr->vi_write(msg, strlen(msg));
   }
- private:
-  const char *msg_;
 };
 
 template<>class Formatter<int> {
  public:
   typedef const Writable &return_type;
-  Formatter(int v): v_(v) {}
-  void format(Writable *wr) const {
+  static void format(Writable *wr, int v) {
     char tmp[sizeof(int) * 3 + 1];
-    sprintf(tmp, "%d", v_);
+    sprintf(tmp, "%d", v);
     wr->vi_write(tmp, strlen(tmp));
   }
- private:
-  int v_;
 };
 
 // TODO(pts): Make these fewer.
@@ -134,33 +127,33 @@ template<>class Formatter<int> {
 // types T without a Formatter<T>, so the compiler will just silently skip
 // over this template function.
 template<class T>
-typename Formatter<T>::return_type operator<<(const StringWritable &wr, const T &f) {
-  Formatter<T>(f).format(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T>::return_type operator<<(const StringWritable &wr, const T &t) {
+  Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 template<class T>
-typename Formatter<T*>::return_type operator<<(const StringWritable &wr, const T *f) {
-  Formatter<T*>(f).format(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T*>::return_type operator<<(const StringWritable &wr, const T *t) {
+  Formatter<T*>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 template<class T>
-typename Formatter<T>::return_type operator<<(const FileObj &wr, const T &f) {
-  Formatter<T>(f).format(const_cast<FileObj*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T>::return_type operator<<(const FileObj &wr, const T &t) {
+  Formatter<T>::format(const_cast<FileObj*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 template<class T>
-typename Formatter<T*>::return_type operator<<(const FileObj &wr, const T *f) {
-  Formatter<T*>(f).format(const_cast<FileObj*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T*>::return_type operator<<(const FileObj &wr, const T *t) {
+  Formatter<T*>::format(const_cast<FileObj*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 template<class T>
-typename Formatter<T>::return_type operator<<(const Writable &wr, const T &f) {
-  Formatter<T>(f).format(const_cast<Writable*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T>::return_type operator<<(const Writable &wr, const T &t) {
+  Formatter<T>::format(const_cast<Writable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 template<class T>
-typename Formatter<T*>::return_type operator<<(const Writable &wr, const T *f) {
-  Formatter<T*>(f).format(const_cast<Writable*>(&wr));  // TODO(pts): Fix const_cast.
+typename Formatter<T*>::return_type operator<<(const Writable &wr, const T *t) {
+  Formatter<T*>::format(const_cast<Writable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 
