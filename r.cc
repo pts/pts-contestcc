@@ -6,6 +6,7 @@
 // C++ disadvantage: no automatic memory management (not a big problem)
 // C++ disadvantage: no regexps (not a problem most of the time)
 
+#include "r_status.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -15,11 +16,6 @@
 
 // For eGlibc, math.h defines this, for uClibc, it doesn't.
 // #define NAN (__builtin_nanf (""))
-
-void die(const char *msg) {
-  fprintf(stderr, "fatal: %s\n", msg);
-  exit(1);
-}
 
 template <typename T, unsigned S>
 inline unsigned arraysize(const T (&)[S]) { return S; }
@@ -31,37 +27,6 @@ static inline bool is_whitespace(int c) {
 static inline bool is_digit(int c) {
   return c - '0' + 0U <= 9;
 }
-
-template<class T>static inline T *notnull(T *t) {
-  if (!t) die("NULL pointer found.");
-  return t;
-}
-
-template<class T>static inline const T *notnull(const T *t) {
-  if (!t) die("NULL pointer found.");
-  return t;
-}
-
-#define assume_notnull(t) (t)
-
-class Status {
- public:
-  // TODO(pts): Don't inline these constructs and destrutors?
-  Status(bool is_ok)
-      : msg_(is_ok ? NULL : "Something failed."), is_used_(false) {}
-  // msg is owned externally.
-  Status(char const *msg): msg_(msg), is_used_(false) {}
-  ~Status() {
-    // TODO(pts): Show stack trace.
-    if (!is_used_ && msg_) die(msg_);
-  }
-  bool ok() const { is_used_ = true; return !msg_; }
-  operator bool() const { return ok(); }
-
- private:
-  const char *msg_;
-  mutable bool is_used_;
-};
 
 Status read_word(FILE *f, std::string *out) {
   int c;
