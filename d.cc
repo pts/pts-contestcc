@@ -1,4 +1,5 @@
 #include "r_fileobj.h"
+#include "r_basic_formatters.h"
 
 #include <string>
 #include <vector>
@@ -93,37 +94,6 @@ template<class T>
 const Writable &operator<<(const StringWritable &wr, const Dumper<T> &d) {
   d.dump(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
   return wr;
-}
-
-template<class T>class Formatter {};
-//  // TODO(pts): Make it a compile error not to override.
-//  void format(Writable *wr);  // Never implemented.
-//};
-
-//template<class T>class Dummy {};
-//template<>class Dummy<const char*> { public: typedef int t; };
-
-#define DEFINE_FORMATTER(type, argtype) \
-    template<>struct Formatter<type> { \
-      typedef const Writable &return_type; \
-      static void format(Writable *wr, argtype); \
-    };
-#define DEFINE_FORMATTER_PTR(type) DEFINE_FORMATTER(type*, type const*)
-#define DEFINE_FORMATTER_REF(type) DEFINE_FORMATTER(type, type const&)
-#define DEFINE_FORMATTER_COPY(type) DEFINE_FORMATTER(type, type)
-
-DEFINE_FORMATTER_PTR(char);
-DEFINE_FORMATTER_COPY(int);
-
-// Prepending `template<>' would prevent this from compiling.
-void Formatter<char*>::format(Writable *wr, const char *msg) {
-  wr->vi_write(msg, strlen(msg));
-}
-
-void Formatter<int>::format(Writable *wr, int v) {
-  char tmp[sizeof(int) * 3 + 1];
-  sprintf(tmp, "%d", v);
-  wr->vi_write(tmp, strlen(tmp));
 }
 
 // TODO(pts): Make these fewer.

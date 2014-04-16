@@ -5,8 +5,6 @@
 #error This is a C++ header.
 #endif
 
-#include "r_status.h"
-
 #include <stdint.h>
 
 class Writable {
