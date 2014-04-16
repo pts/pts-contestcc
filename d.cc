@@ -41,35 +41,39 @@ class StringWritable: public Writable {
   std::string *str_;
 };
 
-void fdump(FILE *f, bool b) {
-  fprintf(f, "%s", b ? "true" : " false");
+void wrdump(Writable *wr, bool b) {
+  const char *msg = b ? "true" : "false";
+  wr->vi_write(msg, strlen(msg));
 }
 
-void fdump(FILE *f, int i) {
-  fprintf(f, "%d", i);
+void wrdump(Writable *wr, int i) {
+  char tmp[sizeof(int) * 3 + 1];
+  sprintf(tmp, "%d", i);
+  wr->vi_write(tmp, strlen(tmp));
 }
 
-template<typename T>void fdump(FILE *f, const T *a, uintptr_t size) {
-  putc('{', f);
+template<typename T>void wrdump(Writable *wr, const T *a, uintptr_t size) {
+  wr->vi_putc('{');
   if (size != 0) {
-    fdump(f, a[0]);
+    wrdump(wr, a[0]);
     for (uintptr_t i = 1; i < size; ++i) {
-      putc(',', f);
-      putc(' ', f);
-      fdump(f, a[i]);
+      wr->vi_putc(',');
+      wr->vi_putc(' ');
+      wrdump(wr, a[i]);
     }
   }
-  putc('}', f);
+  wr->vi_putc('}');
 }
 
-template<typename T, uintptr_t S>void fdump(FILE *f, const T (&a)[S]) {
-  fdump(f, a, S);
+template<typename T, uintptr_t S>void wrdump(Writable *wr, const T (&a)[S]) {
+  wrdump(wr, a, S);
 }
 
-template<typename T>void fdump(FILE *f, const std::vector<T> a) {
-  fdump(f, a.data(), a.size());
+template<typename T>void wrdump(Writable *wr, const std::vector<T> a) {
+  wrdump(wr, a.data(), a.size());
 }
 
+// TODO(pts): Don't create a Dumper class instance per type.
 template<class T>class Dumper {
  public:
   Dumper(const T &t): is_dumped_(false), t_(t) {}
@@ -82,7 +86,8 @@ template<class T>class Dumper {
   }
   void dump(FILE *f) const {
     is_dumped_ = true;
-    fdump(f, t_);
+    FileWritable fwstderr(f);  // TODO(pts): Do it without creating a variable.
+    wrdump(&fwstderr, t_);
   }
  private:
   mutable bool is_dumped_;
