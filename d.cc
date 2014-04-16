@@ -54,7 +54,8 @@ template<typename T>void wrdump(Writable *wr, const std::vector<T> a) {
   wrdump(wr, a.data(), a.size());
 }
 
-// TODO(pts): Don't create a Dumper class instance per type.
+// TODO(pts): Don't create a Dumper class instance per type, reduce
+// generated code bloat.
 template<class T>class Dumper {
  public:
   Dumper(const T &t): is_dumped_(false), t_(t) {}
@@ -78,25 +79,9 @@ template<class T>class Dumper {
 template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
 
 // TODO(pts): Make these fewer.
-template<class T>
-const Writable &operator<<(const Writable &wr, const Dumper<T> &d) {
-  d.dump(const_cast<Writable*>(&wr));  // TODO(pts): Fix const_cast.
-  return wr;
-}
-template<class T>
-const Writable &operator<<(const FileObj &wr, const Dumper<T> &d) {
-  d.dump(const_cast<FileObj*>(&wr));  // TODO(pts): Fix const_cast.
-  return wr;
-}
+//
 // `s << dump(42)' doesn't work if we have Writable argument here.
 // `s << dump(42)' doesn't work if we have non-const reference here.
-template<class T>
-const Writable &operator<<(const StringWritable &wr, const Dumper<T> &d) {
-  d.dump(const_cast<StringWritable*>(&wr));  // TODO(pts): Fix const_cast.
-  return wr;
-}
-
-// TODO(pts): Make these fewer.
 //
 // Formatter<T>::return_type is tricky here, because that's not defined for
 // types T without a Formatter<T>, so the compiler will just silently skip
@@ -132,6 +117,13 @@ typename Formatter<T*>::return_type operator<<(const Writable &wr, const T *t) {
   return wr;
 }
 
+template<class T>struct Formatter<Dumper<T> > {
+  FORMATTER_COMMON_DECLS
+  static inline void format(Writable *wr, const Dumper<T> &d) {
+    d.dump(wr);
+  }
+};
+
 int main() {
   char const *msg = "Bye";
   int a[3] = {55, 66, 77};
@@ -155,7 +147,7 @@ int main() {
   // of `<<` are basic types, so `operator<<' declarations are not
   // considered.
   FileObj(stdout) << "HI:" << dump(42) << dump(-6);
-  stdout << dump(-7) << dump(-89);
+  stdout << dump(-7) << " " << dump(89);
   printf("\n");
 
   return 0;

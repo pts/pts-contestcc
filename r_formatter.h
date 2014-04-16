@@ -27,9 +27,11 @@
 // template specializations (i.e. DEFINE_FORMATTER).
 template<class T>class Formatter {};
 
+#define FORMATTER_COMMON_DECLS typedef const Writable &return_type;
+
 #define DEFINE_FORMATTER(type, argtype) \
     template<>struct Formatter<type> { \
-      typedef const Writable &return_type; \
+      FORMATTER_COMMON_DECLS \
       static void format(Writable *wr, argtype); \
     };
 #define DEFINE_FORMATTER_PTR(type) DEFINE_FORMATTER(type*, type const*)
