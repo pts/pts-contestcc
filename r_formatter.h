@@ -5,7 +5,7 @@
 #error This is a C++ header.
 #endif
 
-#include "r_writable.h"
+class Writable;
 
 // Declarations below are highly magical.
 //

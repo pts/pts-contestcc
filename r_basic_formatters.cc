@@ -1,4 +1,5 @@
 #include "r_basic_formatters.h"
+#include "r_writable.h"
 
 #include <stdio.h>
 #include <string.h>

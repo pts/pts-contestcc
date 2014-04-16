@@ -7,6 +7,7 @@
 
 #include "r_formatter.h"
 
+// TODO(pts): Add shortcuts for writing int to stdout (etc.).
 DEFINE_FORMATTER_COPY(int);
 DEFINE_FORMATTER_PTR(char);
 
