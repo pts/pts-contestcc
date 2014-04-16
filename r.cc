@@ -21,6 +21,9 @@ void die(const char *msg) {
   exit(1);
 }
 
+template <typename T, unsigned S>
+inline unsigned arraysize(const T (&)[S]) { return S; }
+
 static inline bool is_whitespace(int c) {
   return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
