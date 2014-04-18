@@ -69,7 +69,8 @@ class C {
 
 template<class V>class TFormatter {};
 
-template<>struct TFormatter<int> {
+template<>class TFormatter<int> {
+ public:
   typedef void *tag_type;
   enum max_type { max_buf_size = 12 };
   static void format(int v, char *buf) {
@@ -77,17 +78,31 @@ template<>struct TFormatter<int> {
   }
 };
 
-template<>struct TFormatter<const char*> {
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 2 };
-  // TODO(pts): Implement this as special-case.
-  static void format(const char*, char *buf) {
-    strcpy(buf, "*");
-    //printf("format<const char*>(%s)\n", v);
-  }
+template<>class TFormatter<const char*> {
+ public:
+  typedef void *piece_type;
+  inline TFormatter(const char *v): data_(v), size_(strlen(v)) {}
+  inline const char *data() const { return data_; }
+  inline uintptr_t size() const { return size_; }
+ private:
+  const char *data_;
+  uintptr_t size_;
 };
 
-template<>struct TFormatter<const C&> {
+template<>class TFormatter<std::string> {
+ public:
+  typedef void *piece_type;
+  inline TFormatter(const std::string &str)
+      : data_(str.data()), size_(str.size()) {}
+  inline const char *data() const { return data_; }
+  inline uintptr_t size() const { return size_; }
+ private:
+  const char *data_;
+  uintptr_t size_;
+};
+
+template<>class TFormatter<const C&> {
+ public:
   typedef void *tag_type;
   enum max_type { max_buf_size = 4 };
   // TODO(pts): Implement this as generic callback.
@@ -101,27 +116,36 @@ template<>struct TFormatter<const C&> {
 //  typedef void *tag_type;
 //};
 
-template<class First, class Second>struct TypePair {
-  typedef First first_type;
-  typedef Second second_type;
-};
-
 template<class T>class TWritable {};
 
 template<>struct TWritable<std::string> {
-  typedef const std::string &constref_type;
-  static inline void write(const char *msg, const std::string &wr) {
+  typedef void *tag_type;
+  static inline void write(const char *data, uintptr_t size,
+                           const std::string &wr) {
     // This const_cast is needed. Without fake consts we'd need a
     // helper class (e.g. StringWritable) and extra templates.
+    const_cast<std::string&>(wr).append(data, size);
+  }
+  static inline void write(const char *msg, const std::string &wr) {
     const_cast<std::string&>(wr).append(msg);
   }
 };
 
 template<>struct TWritable<FileObj> {
-  typedef const FileObj &constref_type;
+  typedef void *tag_type;
+  static inline void write(const char *data, uintptr_t size,
+                           const FileObj &wr) {
+    wr.write(data, size);  // TODO(pts): Move `Status' away from inline.
+  }
   static inline void write(const char *msg, const FileObj &wr) {
     wr.write(msg);  // TODO(pts): Move `Status' away from inline.
   }
+};
+
+template<class First, class Second, class Third>struct TypeTriplet {
+  typedef First first_type;
+  typedef Second second_type;
+  typedef Third third_type;
 };
 
 // The return type is just `const W&', but it's formulated in a way to prevent
@@ -129,8 +153,8 @@ template<>struct TWritable<FileObj> {
 // not specialized. This is a tricky use of
 // http://en.wikipedia.org/wiki/SFINAE .
 template<class W, class V>static inline
-typename TypePair<typename TWritable<W>::constref_type,
-                  typename TFormatter<const V&>::max_type >::first_type
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename TFormatter<const V&>::max_type >::first_type
 operator<<(const W &wr, const V &v) {
   char buf[TFormatter<const V&>::max_buf_size];
   TFormatter<const V&>::format(v, buf);
@@ -139,12 +163,30 @@ operator<<(const W &wr, const V &v) {
 }
 
 template<class W, class V>static inline
-typename TypePair<typename TWritable<W>::constref_type,
-                  typename TFormatter<V>::max_type >::first_type
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename TFormatter<V>::max_type >::first_type
 operator<<(const W &wr, V v) {
   char buf[TFormatter<V>::max_buf_size];
   TFormatter<V>::format(v, buf);
   TWritable<W>::write(buf, wr);
+  return wr;
+}
+
+template<class W, class V>static inline
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename TFormatter<const V&>::piece_type >::first_type
+operator<<(const W &wr, const V &v) {
+  TFormatter<const V&> fmt(v);
+  TWritable<W>::write(fmt.data(), fmt.size(), wr);
+  return wr;
+}
+
+template<class W, class V>static inline
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename TFormatter<V>::piece_type >::first_type
+operator<<(const W &wr, V v) {
+  TFormatter<V> fmt(v);
+  TWritable<W>::write(fmt.data(), fmt.size(), wr);
   return wr;
 }
 
@@ -164,7 +206,7 @@ int main() {
   s << c;   // No copy of C.
   s << cr;  // No copy of C.
   printf("</C>\n");
-  s << "Foo";
+  s << "Foo" << std::string("Bar");
   printf("S=(%s)\n", s.c_str());
   // FileObj(stdout) << true;  // Doesn't compile, TFormatter<bool> not defined.
   return 0;
