@@ -72,6 +72,13 @@ template<>struct TFormatter<int> {
   }
 };
 
+template<>struct TFormatter<const char*> {
+  typedef void *tag_type;
+  static void format(const char *v) {
+    printf("format<const char*>(%s)\n", v);
+  }
+};
+
 template<>struct TFormatter<const C&> {
   typedef void *tag_type;
   static void format(const C&) {
@@ -111,6 +118,17 @@ template<>struct TWritable<FileObj> {
 // http://en.wikipedia.org/wiki/SFINAE .
 template<class W, class V>static inline
 typename TypePair<typename TWritable<W>::constref_type,
+                  typename TFormatter<const V&>::tag_type >::first_type
+operator<<(const W &wr, const V &v) {
+  (void)v;
+  TFormatter<const V&>::format(v);
+  // TFormatter::<V> format_short(V);
+  //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
+  return wr;
+}
+
+template<class W, class V>static inline
+typename TypePair<typename TWritable<W>::constref_type,
                   typename TFormatter<V>::tag_type >::first_type
 operator<<(const W &wr, V v) {
   (void)v;
@@ -130,6 +148,14 @@ operator<<(const W &wr, V v) {
 template<class V>static inline
 typename TypePair<StringWritable,
                   typename TFormatter<V>::tag_type >::first_type
+operator<<(std::string &str, V v) {
+  StringWritable sw(&str);
+  sw << v;
+  return sw;
+}
+template<class V>static inline
+typename TypePair<StringWritable,
+                  typename TFormatter<const V&>::tag_type >::first_type
 operator<<(std::string &str, const V &v) {
   StringWritable sw(&str);
   sw << v;
@@ -148,9 +174,10 @@ int main() {
   C c;
   printf("<C>\n");
   const C &cr(c);
-  s << cr;  // SUXX: Doesn't compile, wants to match V = C (rather than V = const C&).
+  s << c;   // No copy of C.
+  s << cr;  // No copy of C.
   printf("</C>\n");
-  // s << "Foo";
-  // FileObj(stdout) << true;
+  s << "Foo";
+  // FileObj(stdout) << true;  // Doesn't compile, TFormatter<bool> not defined.
   return 0;
 }
