@@ -98,30 +98,30 @@ template<>class TFormatter<int> {
   }
 };
 
+struct Piece {
+  inline Piece(const char *data, uintptr_t size)
+      : data(data), size(size) {}
+  const char *data;
+  uintptr_t size;
+};
+
 template<>class TFormatter<const char*> {
  public:
   // TODO(pts): Write choose instructions.
-  // If both piece_type and append_type are fesible, use append_type if
+  // If both piece_type and append_type are feasible, use append_type if
   // with piece_type you'd do dynamic memory allocation.
   typedef void *piece_type;
-  inline TFormatter(const char *v): data_(v), size_(strlen(v)) {}
-  inline const char *data() const { return data_; }
-  inline uintptr_t size() const { return size_; }
- private:
-  const char *data_;
-  uintptr_t size_;
+  static inline Piece format_piece(const char *v) {
+    return Piece(v, strlen(v));
+  }
 };
 
 template<>class TFormatter<std::string> {
  public:
   typedef void *piece_type;
-  inline TFormatter(const std::string &str)
-      : data_(str.data()), size_(str.size()) {}
-  inline const char *data() const { return data_; }
-  inline uintptr_t size() const { return size_; }
- private:
-  const char *data_;
-  uintptr_t size_;
+  static inline Piece format_piece(const std::string &v) {
+    return Piece(v.data(), v.size());
+  }
 };
 
 template<>class TFormatter<const C&> {
@@ -206,8 +206,8 @@ template<class W, class V>static inline
 typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
                      typename TFormatter<const V&>::piece_type>::first_type
 operator<<(const W &wr, const V &v) {
-  TFormatter<const V&> fmt(v);
-  TWritable<W>::write(fmt.data(), fmt.size(), wr);
+  Piece piece(TFormatter<const V&>::format_piece(v));
+  TWritable<W>::write(piece.data, piece.size, wr);
   return wr;
 }
 
@@ -215,8 +215,8 @@ template<class W, class V>static inline
 typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
                      typename TFormatter<V>::piece_type>::first_type
 operator<<(const W &wr, V v) {
-  TFormatter<V> fmt(v);
-  TWritable<W>::write(fmt.data(), fmt.size(), wr);
+  Piece piece(TFormatter<V>::format_piece(v));
+  TWritable<W>::write(piece.data, piece.size, wr);
   return wr;
 }
 
@@ -280,8 +280,8 @@ template<class V>static inline
 typename TypePair<std::string&,
                   typename TFormatter<const V&>::piece_type>::first_type
 operator<<(std::string &wstr, const V &v) {
-  TFormatter<const V&> fmt(v);
-  wstr.append(fmt.data(), fmt.size());
+  Piece piece(TFormatter<const V&>::format_piece(v));
+  wstr.append(piece.data, piece.size);
   return wstr;
 }
 
@@ -289,8 +289,8 @@ template<class V>static inline
 typename TypePair<std::string&,
                   typename TFormatter<V>::piece_type>::first_type
 operator<<(std::string &wstr, V v) {
-  TFormatter<V> fmt(v);
-  wstr.append(fmt.data(), fmt.size());
+  Piece piece(TFormatter<V>::format_piece(v));
+  wstr.append(piece.data, piece.size);
   return wstr;
 }
 
