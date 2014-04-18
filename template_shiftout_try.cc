@@ -106,35 +106,28 @@ template<class First, class Second>struct TypePair {
 
 template<class T>class TWritable {};
 
-template<>struct TWritable<StringWritable> {
-  typedef const StringWritable &constref_type;
-  static inline void write(const char *msg, const StringWritable &wr) {
-    wr.str()->append(msg);
+template<>struct TWritable<std::string> {
+  typedef std::string &ref_type;
+  static inline void write(const char *msg, std::string &wr) {
+    wr.append(msg);
   }
 };
 
 template<>struct TWritable<FileObj> {
-  typedef const FileObj &constref_type;
+  typedef FileObj &ref_type;
   static inline void write(const char *msg, const FileObj &wr) {
     wr.write(msg);  // TODO(pts): Move `Status' away from inline.
   }
 };
-
-// Goal (1): Unify these two below, and make them write the int.
-// Goal (2): Add support for writing `const char*', still unified.
-
-// candidate template ignored: couldn't infer template argument 'T'
-//template<class T>static inline typename TWritable<T>::constref_type operator<<(
-//    typename TWritable<T>::constref_type wr, int) {
 
 // The return type is just `const W&', but it's formulated in a way to prevent
 // the template from matching if either TWritable<W> or TFormatter<V> is
 // not specialized. This is a tricky use of
 // http://en.wikipedia.org/wiki/SFINAE .
 template<class W, class V>static inline
-typename TypePair<typename TWritable<W>::constref_type,
+typename TypePair<typename TWritable<W>::ref_type,
                   typename TFormatter<const V&>::max_type >::first_type
-operator<<(const W &wr, const V &v) {
+operator<<(W &wr, const V &v) {
   char buf[TFormatter<const V&>::max_buf_size];
   TFormatter<const V&>::format(v, buf);
   TWritable<W>::write(buf, wr);
@@ -144,9 +137,9 @@ operator<<(const W &wr, const V &v) {
 }
 
 template<class W, class V>static inline
-typename TypePair<typename TWritable<W>::constref_type,
+typename TypePair<typename TWritable<W>::ref_type,
                   typename TFormatter<V>::max_type >::first_type
-operator<<(const W &wr, V v) {
+operator<<(W &wr, V v) {
   char buf[TFormatter<V>::max_buf_size];
   TFormatter<V>::format(v, buf);
   TWritable<W>::write(buf, wr);
@@ -155,6 +148,7 @@ operator<<(const W &wr, V v) {
   return wr;
 }
 
+#if 0
 // This doesn't make (S) work, because std::string() is not an l-value.
 // But makes `s << ...' work.
 //
@@ -179,9 +173,15 @@ operator<<(std::string &str, const V &v) {
   sw << v;
   return sw;
 }
+#endif
+
+FileObj fo(FILE *f) { return FileObj(f); }
 
 int main() {
-  fprintf((FileObj(stdout) << 42 << -5).f(), ".\n");
+  FileObj sout(stdout);
+  // TODO(pts): To make FileObj(stdout) or `fo(stdout)' work, we need `const W&'.
+  fprintf((sout << 42 << -5).f(), ".\n");
+  fprintf((fo(stdout) << 42 << -5).f(), ".\n");
   // SUXX: No way to make it work like this.
   // This doesn't work without the explicit operator<<(std:: string &,...).
   // printf("%s!\n", (std::string() << 42 << -5).c_str()); // (S).
