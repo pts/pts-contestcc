@@ -1,0 +1,8 @@
+// C++ disadvantage: memory errors (e.g. segfault), no array bounds checking
+// C++ disadvantage: no stack trace
+// C++ disadvantage: no unliminted ints by default
+// C++ disadvantage: no easy int overflow detection
+// C++ disadvantage: uninitialized variables (there is a warning)
+// C++ disadvantage: no automatic memory management (not a big problem)
+// C++ disadvantage: no regexps (not a problem most of the time)
+// C++ disadvantage: printf on long double doesn't work on Windows (MinGW).
