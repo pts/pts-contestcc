@@ -41,7 +41,7 @@ class FileObj {
 class StringWritable {
  public:
   // This is needed for convenience in my_string << dump(42).
-  StringWritable(std::string &str): str_(&str) {}
+  StringWritable(std::string &str): str_(&str) {}  // !! needed?
   StringWritable(std::string *str): str_(assume_notnull(str)) {}
   std::string *str() const { return str_; }
   const char *c_str() const { return str_->c_str(); }
@@ -55,26 +55,41 @@ class StringWritable {
   std::string *str_;
 };
 
+template<class T>class TWritable {};
+
+template<>struct TWritable<StringWritable> {
+  typedef const StringWritable &constref_type;
+};
+
+template<>struct TWritable<FileObj> {
+  typedef const FileObj &constref_type;
+};
+
 // Goal (1): Unify these two below, and make them write the int.
 // Goal (2): Add support for writing `const char*', still unified.
 
-//template<class T>static inline typename Formatter<T>::return_type
-const StringWritable &operator<<(const StringWritable &wr, int) {
+// candidate template ignored: couldn't infer template argument 'T'
+//template<class T>static inline typename TWritable<T>::constref_type operator<<(
+//    typename TWritable<T>::constref_type wr, int) {
+
+template<class T>static inline typename TWritable<T>::constref_type operator<<(
+    const T &wr, int) {
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 
-const FileObj &operator<<(const FileObj &wr, int) {
-  //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
-  return wr;
-}
+//template<class T>static inline StringWritable &operator<<(
+//    std::string &s, int) {
+//  String
+
 
 // This doesn't make (S) work, because std::string() is not an l-value.
-//StringWritable operator<<(std::string &str, int) {
-//  StringWritable sw(str);
-//  // !! ...
-//  return sw;
-//}
+// But makes `s << ...' work.
+StringWritable operator<<(std::string &str, int) {
+  StringWritable sw(&str);
+  // !! ...
+  return sw;
+}
 
 int main() {
   fprintf((FileObj(stdout) << 42 << -5).f(), ".\n");
