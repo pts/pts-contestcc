@@ -1,3 +1,7 @@
 *~
 a.out
-
+*.o
+core
+DEADJOE
+*_demo
+libr.a
