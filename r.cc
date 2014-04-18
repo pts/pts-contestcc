@@ -9,6 +9,7 @@
 
 #include "r_status.h"
 #include "r_fileobj.h"
+#include "r_shiftout.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -222,6 +223,8 @@ static inline const FileObj &operator>>(const FileObj &f, EofIn) {
 class Io {};
 extern Io io;
 
+// TODO(pts): These are not safe if multi-module initialization is
+// performed, they can be out of order.
 FileObj sin(stdin);
 // Any of these work:
 //
@@ -234,73 +237,9 @@ FileObj serr(stderr);
 
 // io << stdout << "Hello!\n";
 static inline FileObj operator<<(Io, FILE *f) { return f; }
-// io >> stdin >> literal(",");
+// io >> stdin >> ",";
+// TODO(pts): wrap(stdin) instead of `io >> stdin'.
 static inline FileObj operator>>(Io, FILE *f) { return f; }
-static inline const FileObj &operator<<(Io, const FileObj &fo) { return fo; }
-static inline const FileObj &operator<<(const FileObj &fo, const char *msg) {
-  fo.write(msg);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, const std::string &str) {
-  fo.write(str.data(), str.size());
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, bool v) {
-  fo.write(v ? "true" : "false");
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, int8_t v) {
-  write_dec(&fo, (int64_t)v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, int16_t v) {
-  write_dec(&fo, (int64_t)v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, int32_t v) {
-  write_dec(&fo, (int64_t)v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, int64_t v) {
-  write_dec(&fo, v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, uint8_t v) {
-  write_dec(&fo, (uint64_t)v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, uint16_t v) {
-  write_dec(&fo, (uint64_t)v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, uint32_t v) {
-  write_dec(&fo, (uint64_t)v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, uint64_t v) {
-  write_dec(&fo, v);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, float v) {
-  char buf[24];
-  fmt_float(v, buf);
-  fo.write(buf);
-  return fo;
-}
-static inline const FileObj &operator<<(const FileObj &fo, double v) {
-  char buf[24];
-  fmt_double(v, buf);
-  fo.write(buf);
-  return fo;
-}
-
-class Flush {};
-extern Flush flush;
-
-static inline const FileObj &operator<<(const FileObj &fo, Flush) {
-  fo.flush();
-  return fo;
-}
 
 // TODO(pts): Add operator<< for StringOutObj.
 

@@ -42,12 +42,34 @@ template<>struct TWritable<FileWrapper> {
   }
 };
 
+// --- Flushing using operator<<.
+//
+// Usage: `stdout << flush'.
+
+class Flush {};
+extern Flush flush;
+
+// Helper template and specialization for keeping the operator<< with `flush'
+// argument a template, for symmetry and error reporting.
+template<class T>class TFileWrapper {};
+template<>struct TFileWrapper<FileWrapper> {
+  typedef void *tag_type;
+};
+
+template<class W>static inline
+typename TypePair<const FileWrapper&,
+                  typename TFileWrapper<W>::tag_type >::first_type
+operator<<(const W &wf, Flush) {
+  fflush(wf.f);
+  return wf;
+}
+
 // --- Writing to FileShiftout.
 //
 // This includes automatic error checking at the end of the output.
 
 // Helper template and specialization for keeping the operator<< with `char v'
-// argument a template.
+// argument a template, for symmetry and error reporting.
 template<class T>class TFileShiftout {};
 template<>struct TFileShiftout<FileShiftout> {
   typedef void *tag_type;
