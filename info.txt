@@ -1,8 +1,22 @@
-// C++ disadvantage: memory errors (e.g. segfault), no array bounds checking
-// C++ disadvantage: no stack trace
-// C++ disadvantage: no unliminted ints by default
-// C++ disadvantage: no easy int overflow detection
-// C++ disadvantage: uninitialized variables (there is a warning)
-// C++ disadvantage: no automatic memory management (not a big problem)
-// C++ disadvantage: no regexps (not a problem most of the time)
-// C++ disadvantage: printf on long double doesn't work on Windows (MinGW).
+Advantage of C++ in programming contests:
+
+* compiled code runs very quickly (even faster than Java, Haskell and V8
+  JavaScript)
+
+Disadvantages of C++ in programming contests:
+
+* memory errors (e.g. segfault), no array bounds checking
+* no stack trace
+* ints are not unbounded by default
+* no unbounded ints in the standard library
+* no easy int overflow detection
+* uninitialized variables (there is a warning)
+* no automatic memory management (not a big problem)
+* no regexps (not a problem most of the time)
+* printf on long double doesn't work on Windows (MinGW) (solved in -lr)
+* cin and cout are very slow (solved in -lr)
+* printf and scanf are not type-safe (e.g. int vs long long) (solved in -lr)
+* I/O and parse errors remain undetected by default (solved in -lr)
+* no easy way to dump a data structure (like Ruby p and Python repr) (solved in -lr)
+
+__END__
