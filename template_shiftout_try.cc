@@ -24,6 +24,7 @@ class FileObj {
   }
   // Implements method from Writable.
   // TODO(pts): Move this to the .cc file.
+  // !! TODO(pts): Don't add virtual methods, it's just overhead for each object.
   //virtual void vi_write(const void *p, uintptr_t size) {
   //  Status(fwrite(p, 1, size, f_) == size);
   //}
@@ -45,6 +46,7 @@ class StringWritable {
   StringWritable(std::string *str): str_(assume_notnull(str)) {}
   std::string *str() const { return str_; }
   const char *c_str() const { return str_->c_str(); }
+  // !! TODO(pts): Don't add virtual methods, it's just overhead for each object.
   //virtual void vi_write(const void *p, uintptr_t size) {
   //  str_->append(static_cast<const char *>(p), size);
   //}
@@ -67,22 +69,29 @@ template<class V>class TFormatter {};
 
 template<>struct TFormatter<int> {
   typedef void *tag_type;
-  static void format(int v) {
-    printf("format<int>(%d)\n", v);
+  enum max_type { max_buf_size = 12 };
+  static void format(int v, char *buf) {
+    sprintf(buf, "%d", v);  // TODO(pts): Faster.
   }
 };
 
 template<>struct TFormatter<const char*> {
   typedef void *tag_type;
-  static void format(const char *v) {
-    printf("format<const char*>(%s)\n", v);
+  enum max_type { max_buf_size = 2 };
+  // TODO(pts): Implement this as special-case.
+  static void format(const char*, char *buf) {
+    strcpy(buf, "*");
+    //printf("format<const char*>(%s)\n", v);
   }
 };
 
 template<>struct TFormatter<const C&> {
   typedef void *tag_type;
-  static void format(const C&) {
-    printf("format<C>(...)\n");
+  enum max_type { max_buf_size = 4 };
+  // TODO(pts): Implement this as generic callback.
+  static void format(const C&, char *buf) {
+    strcpy(buf, "C()");
+    // printf("format<C>(...)\n");
   }
 };
 
@@ -99,10 +108,16 @@ template<class T>class TWritable {};
 
 template<>struct TWritable<StringWritable> {
   typedef const StringWritable &constref_type;
+  static inline void write(const char *msg, const StringWritable &wr) {
+    wr.str()->append(msg);
+  }
 };
 
 template<>struct TWritable<FileObj> {
   typedef const FileObj &constref_type;
+  static inline void write(const char *msg, const FileObj &wr) {
+    wr.write(msg);  // TODO(pts): Move `Status' away from inline.
+  }
 };
 
 // Goal (1): Unify these two below, and make them write the int.
@@ -118,10 +133,11 @@ template<>struct TWritable<FileObj> {
 // http://en.wikipedia.org/wiki/SFINAE .
 template<class W, class V>static inline
 typename TypePair<typename TWritable<W>::constref_type,
-                  typename TFormatter<const V&>::tag_type >::first_type
+                  typename TFormatter<const V&>::max_type >::first_type
 operator<<(const W &wr, const V &v) {
-  (void)v;
-  TFormatter<const V&>::format(v);
+  char buf[TFormatter<const V&>::max_buf_size];
+  TFormatter<const V&>::format(v, buf);
+  TWritable<W>::write(buf, wr);
   // TFormatter::<V> format_short(V);
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
@@ -129,10 +145,11 @@ operator<<(const W &wr, const V &v) {
 
 template<class W, class V>static inline
 typename TypePair<typename TWritable<W>::constref_type,
-                  typename TFormatter<V>::tag_type >::first_type
+                  typename TFormatter<V>::max_type >::first_type
 operator<<(const W &wr, V v) {
-  (void)v;
-  TFormatter<V>::format(v);
+  char buf[TFormatter<V>::max_buf_size];
+  TFormatter<V>::format(v, buf);
+  TWritable<W>::write(buf, wr);
   // TFormatter::<V> format_short(V);
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
@@ -153,6 +170,7 @@ operator<<(std::string &str, V v) {
   sw << v;
   return sw;
 }
+
 template<class V>static inline
 typename TypePair<StringWritable,
                   typename TFormatter<const V&>::tag_type >::first_type
@@ -178,6 +196,7 @@ int main() {
   s << cr;  // No copy of C.
   printf("</C>\n");
   s << "Foo";
+  printf("S=(%s)\n", s.c_str());
   // FileObj(stdout) << true;  // Doesn't compile, TFormatter<bool> not defined.
   return 0;
 }
