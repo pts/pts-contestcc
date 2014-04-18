@@ -5,10 +5,8 @@
 #error This is a C++ header.
 #endif
 
-#include "r_stringwritable.h"
 #include "r_shiftout.h"
-#include "r_fileobj.h"
-#include "r_basic_formatters.h"
+#include "r_tformatter_basic.h"
 
 #include <string>
 #include <vector>
@@ -18,46 +16,50 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// We don't care too much about performane (hence no `static inline' for
+// functions etc.), because dumping is for debugging.
+
 // TODO(pts): Add dumping of more types.
+
+// Making it a template so that multiple .cc files can define it.
+template<class T>void wrdump(T, std::string *out);
 
 // TODO(pts): Add most of the implementations to the .cc file -- or at least
 // share if included multiple times.
-void wrdump(Writable *wr, bool b) {
-  const char *msg = b ? "true" : "false";
-  wr->vi_write(msg, strlen(msg));
+template<>void wrdump(bool v, std::string *out) {
+  out->append(v ? "true" : "false");
 }
 
-void wrdump(Writable *wr, int i) {
-  char tmp[sizeof(int) * 3 + 1];
-  sprintf(tmp, "%d", i);
-  wr->vi_write(tmp, strlen(tmp));
+template<>void wrdump(int v, std::string *out) {
+  char buf[TFormatter<int>::max_buf_size];
+  TFormatter<int>::format(v, buf);
+  out->append(buf);
 }
 
-template<typename T>void wrdump(Writable *wr, const T *a, uintptr_t size) {
-  wr->vi_putc('{');
+template<class T>void wrdump(const T *a, uintptr_t size, std::string *out) {
+  out->push_back('{');
   if (size != 0) {
-    wrdump(wr, a[0]);
+    wrdump(a[0], out);
     for (uintptr_t i = 1; i < size; ++i) {
-      wr->vi_putc(',');
-      wr->vi_putc(' ');
-      wrdump(wr, a[i]);
+      out->append(", ", 2);
+      wrdump(a[i], out);
     }
   }
-  wr->vi_putc('}');
+  out->push_back('}');
 }
 
-template<typename T, uintptr_t S>void wrdump(Writable *wr, const T (&a)[S]) {
-  wrdump(wr, a, S);
+template<class T, uintptr_t S>void wrdump(const T (&v)[S], std::string *out) {
+  wrdump(v, S, out);
 }
 
-template<typename T>void wrdump(Writable *wr, const std::vector<T> &a) {
-  wrdump(wr, a.data(), a.size());
+// TODO(pts): Move to r_stl_formatters.h.
+template<class T>void wrdump(const std::vector<T> &v, std::string *out) {
+  wrdump(v.data(), v.size(), out);
 }
 
-template<typename T>void dump_buffnl(FILE *f, const T &t) {
+template<class T>void dump_buffnl(FILE *f, const T &t) {
   std::string out;
-  StringWritable swout(&out);
-  wrdump(&swout, t);
+  wrdump(t, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), f) == out.size());
 }
@@ -73,6 +75,13 @@ template<class T>class Dumper {
     is_dumped_ = true;
     return t_;
   }
+
+  // For `s << dump(42)', cooperating with r_shiftout_base.h.
+  typedef void *format_append_type;
+  void format_append(std::string *out) const {
+    is_dumped_ = true;
+    wrdump(t_, out);
+  }
  private:
   mutable bool is_dumped_;
   const T &t_;
@@ -81,53 +90,44 @@ template<class T>class Dumper {
 template<class T>void dump(const char *msg, const T &t) {
   std::string out(msg);
   // Buffering to a string to reduce stderr autoflush problems.
-  StringWritable swout(&out);
-  wrdump(&swout, t);
+  wrdump(t, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
 template<class T1, class T2>void dump(const char *msg, const T1 &t1, const T2 &t2) {
   std::string out(msg);
-  StringWritable swout(&out);
-  wrdump(&swout, t1);
+  wrdump(t1, &out);
   out.append(", ");
-  wrdump(&swout, t2);
+  wrdump(t2, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
 template<class T1, class T2, class T3>void dump(const char *msg, const T1 &t1, const T2 &t2, const T3 &t3) {
   std::string out(msg);
-  StringWritable swout(&out);
-  wrdump(&swout, t1);
+  wrdump(t1, &out);
   out.append(", ");
-  wrdump(&swout, t2);
+  wrdump(t2, &out);
   out.append(", ");
-  wrdump(&swout, t3);
+  wrdump(t3, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
 template<class T1, class T2, class T3, class T4>void dump(const char *msg, const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4) {
   std::string out(msg);
-  StringWritable swout(&out);
-  wrdump(&swout, t1);
+  wrdump(t1, &out);
   out.append(", ");
-  wrdump(&swout, t2);
+  wrdump(t2, &out);
   out.append(", ");
-  wrdump(&swout, t3);
+  wrdump(t3, &out);
   out.append(", ");
-  wrdump(&swout, t4);
+  wrdump(t4, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
-// TODO(pts): Add even more arguments (T5, T6 etc.).
+// TODO(pts): Should we add even more arguments (T5, T6 etc.)? That may add
+// too much code bloat to the generated binary.
 
+// TODO(pts): Document this function more, it's user-visible.
 template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
-
-template<class T>struct Formatter<Dumper<T> > {
-  FORMATTER_COMMON_DECLS
-  static inline void format(Writable *wr, const Dumper<T> &d) {
-    wrdump(wr, d.release());
-  }
-};
 
 #endif  // R_DUMP_H

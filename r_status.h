@@ -5,31 +5,13 @@
 #error This is a C++ header.
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-
-void die(const char *msg) {
-  fprintf(stderr, "fatal: %s\n", msg);
-  exit(1);
-}
-
-template<class T>static inline T *notnull(T *t) {
-  if (!t) die("NULL pointer found.");
-  return t;
-}
-
-template<class T>static inline const T *notnull(const T *t) {
-  if (!t) die("NULL pointer found.");
-  return t;
-}
-
-#define assume_notnull(t) (t)
+#include "r_die.h"
 
 class Status {
  public:
   // TODO(pts): Don't inline these constructs and destrutors?
   Status(bool is_ok)
-      : msg_(is_ok ? NULL : "Something failed."), is_used_(false) {}
+      : msg_(is_ok ? 0/*nullptr*/ : "Something failed."), is_used_(false) {}
   // msg is owned externally.
   Status(char const *msg): msg_(msg), is_used_(false) {}
   ~Status() {
