@@ -16,4 +16,9 @@ extern Sout sout;  // No need to actually define it anywhere.
 struct Serr { inline operator FILE*() const { return stderr; } };
 extern Serr serr;  // No need to actually define it anywhere.
 
+template<class T>class TStdStream {};
+template<>struct TStdStream<Sin>  { typedef void *tag_type; };
+template<>struct TStdStream<Sout> { typedef void *tag_type; };
+template<>struct TStdStream<Serr> { typedef void *tag_type; };
+
 #endif  // R_SINOUTERR_H

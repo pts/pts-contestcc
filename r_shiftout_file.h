@@ -16,10 +16,13 @@ class FileShiftout {
   // Unfortunately we need these Sin, Sout, Serr constructors for `operator<<'
   // on FileShiftout, because C++ won't do a 2-step conversion: Sout --> FILE*
   // --> FileShifout.
-  inline FileShiftout(const Sin&): f_(stdin) {}
   // TODO(pts): Does `const Sout&' or `Sout' generate more efficient code?
+  // TODO(pts): Can we use TStdStream somehow?
+  inline FileShiftout(const Sin&): f_(stdin) {}
   inline FileShiftout(const Sout&): f_(stdout) {}
   inline FileShiftout(const Serr&): f_(stderr) {}
+  // error: default template arguments may not be used in function templates without -std=c++0x or -std=gnu++0x
+  // template<class S, class U = typename TStdStream<S>::tag_type>inline FileShiftout(const S &s): f_(s) {}
   inline FileShiftout(FILE *f): f_(assume_notnull(f)) {}
   inline FileShiftout(const FileObj &fo): f_(fo.f()) {}
   inline ~FileShiftout() { if (ferror(f_)) die_on_error(); }

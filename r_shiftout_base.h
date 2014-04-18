@@ -9,6 +9,9 @@
 #include "r_twritable.h"
 #include "r_typetuple.h"
 
+// Example: sout << "Hi" << endl.
+static const char endl = '\n';
+
 // --- Generic writing to TWritable<W>.
 //
 // The plan is that the C++ compiler does the type inference, and its

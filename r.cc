@@ -10,6 +10,7 @@
 #include "r_status.h"
 #include "r_fileobj.h"
 #include "r_shiftout.h"
+#include "r_typetuple.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -124,6 +125,8 @@ class DecInI8 {
   int8_t *get() const { return p_; }
  private:
   int8_t *p_;
+//  DecInI8(const DecInI8&);  // TODO(pts): Prevent copy elsewhere.
+//  DecInI8 &operator=(const DecInI8&);
 };
 class DecInI16 {
  public:
@@ -142,8 +145,9 @@ static inline const FileObj &operator>>(const FileObj &f, const DecInI16 &out) {
   return f;
 }
 
-DecInI8  dec(int8_t  *p) { return p; }
-DecInI16 dec(int16_t *p) { return p; }
+// SUXX: These need a valid copy-constructor even if they don't copy.
+DecInI8  dec(int8_t  *p) { return DecInI8(p); }
+DecInI16 dec(int16_t *p) { return DecInI16(p); }
 
 Status read_literal(FILE *f, const char *msg, uintptr_t size) {
   for (; size > 0; ++msg, --size) {
@@ -221,23 +225,25 @@ static inline const FileObj &operator>>(const FileObj &f, EofIn) {
 }
 
 // TODO(pts): Add reading bool (can't ungetc fully).
-
-// --- Output.
-
-class Io {};
-extern Io io;
-
 // TODO(pts): Implement write_hex etc.
-
 // TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
-
 // TODO(pts): Add operator<< for StringOutObj.
 
-// ---
-
-// TODO(pts): Dumping: void operator~(const std::string &s) {}
+template<class S, class V>static inline
+typename TypePair<FileObj, typename TStdStream<S>::tag_type>::first_type
+operator>>(const S &s, const V &v) {
+  FileObj fo(s);
+  fo >> v;
+  return fo;
+}
 
 int main() {
+  sout << "Hi!" << endl;
+  static const char kSlash[] = "/";
+  int8_t x8;
+  if (1) sin >> kSlash >> dec(&x8);
+  if (0) sin >> dec(&x8) >> "\n";
+  if (0) sout >> dec(&x8) >> "\n";
   sout << true;
   fflush(sout);
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
@@ -262,6 +268,5 @@ int main() {
   std::string b = read_word(stdin);
   printf("b=(%s)\n", b.c_str());
   stdin >> literal("\n") >> eof;  // Doesn't compile without literal(...).
-  // TODO(pts): if (0) sin >> "\n";
   return 0;
 }
