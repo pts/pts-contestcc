@@ -55,26 +55,47 @@ class StringWritable {
   std::string *str_;
 };
 
+class C {
+ public:
+  C() { printf("+C\n"); }
+  ~C() { printf("~C\n"); }
+  C(const C&) { printf("*C\n"); }
+  C& operator=(const C&) { printf("=C\n"); return *this; }
+};
+
 template<class V>class TFormatter {};
 
 template<>struct TFormatter<int> {
   typedef void *tag_type;
+  void format(int v) {
+    printf("format<int>(%d)\n", v);
+  }
+};
+
+template<>struct TFormatter<const C&> {
+  typedef void *tag_type;
+  void format(const C&) {
+    printf("format<C>(...)\n");
+  }
 };
 
 //template<>struct TFormatter<bool> {
 //  typedef void *tag_type;
 //};
 
-template<class T, class V>class TWritable {};
-
-template<class V>struct TWritable<StringWritable, V> {
-  typedef const StringWritable &constref_type;
-  //typedef TFormatter<V> formatter_type;
+template<class First, class Second>struct TypePair {
+  typedef First first_type;
+  typedef Second second_type;
 };
 
-template<class V>struct TWritable<FileObj, V> {
+template<class T>class TWritable {};
+
+template<>struct TWritable<StringWritable> {
+  typedef const StringWritable &constref_type;
+};
+
+template<>struct TWritable<FileObj> {
   typedef const FileObj &constref_type;
-  //typedef TFormatter<V> formatter_type;
 };
 
 // Goal (1): Unify these two below, and make them write the int.
@@ -84,24 +105,33 @@ template<class V>struct TWritable<FileObj, V> {
 //template<class T>static inline typename TWritable<T>::constref_type operator<<(
 //    typename TWritable<T>::constref_type wr, int) {
 
-template<class T, class V>static inline typename TWritable<T, typename TFormatter<V>::tag_type >::constref_type operator<<(
-    const T &wr, const V &v) {
+// The return type is just `const W&', but it's formulated in a way to prevent
+// the template from matching if either TWritable<W> or TFormatter<V> is
+// not specialized. This is a tricky use of
+// http://en.wikipedia.org/wiki/SFINAE .
+template<class W, class V>static inline
+typename TypePair<typename TWritable<W>::constref_type,
+                  typename TFormatter<V>::tag_type >::first_type
+operator<<(const W &wr, const V &v) {
   (void)v;
+  // TFormatter::<V> format_short(V);
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 
-//template<class T>static inline StringWritable &operator<<(
-//    std::string &s, int) {
-//  String
-
-
 // This doesn't make (S) work, because std::string() is not an l-value.
 // But makes `s << ...' work.
-// TODO(pts): Make this a template.
-StringWritable operator<<(std::string &str, int) {
+//
+// The return type is just `StringWritable', but it's formulated in a way to
+// prevent the template from matching if either TWritable<W> or
+// TFormatter<V> is not specialized. This is a tricky use of
+// http://en.wikipedia.org/wiki/SFINAE .
+template<class V>static inline
+typename TypePair<StringWritable,
+                  typename TFormatter<V>::tag_type >::first_type
+operator<<(std::string &str, const V &v) {
   StringWritable sw(&str);
-  // !! ...
+  sw << v;
   return sw;
 }
 
@@ -115,6 +145,6 @@ int main() {
   // `const StringWritable&'.
   printf("%s;\n", (s << 42 << -5).c_str());
   // s << "Foo";
-  FileObj(stdout) << true;
+  // FileObj(stdout) << true;
   return 0;
 }
