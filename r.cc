@@ -136,12 +136,12 @@ class DecInI16 {
   int16_t *p_;
 };
 
-static inline const FileObj &operator>>(const FileObj &f, const DecInI8 &out) {
-  read_dec(f.f(), out.get());
+static inline const FileWrapper &operator>>(const FileWrapper &f, const DecInI8 &out) {
+  read_dec(f.f, out.get());
   return f;
 }
-static inline const FileObj &operator>>(const FileObj &f, const DecInI16 &out) {
-  read_dec(f.f(), out.get());
+static inline const FileWrapper &operator>>(const FileWrapper &f, const DecInI16 &out) {
+  read_dec(f.f, out.get());
   return f;
 }
 
@@ -179,13 +179,13 @@ LiteralIn literal(const char *msg, uintptr_t size) {
   return LiteralIn(msg, size);
 }
 
-static inline const FileObj &operator>>(const FileObj &f, const LiteralIn &in) {
-  in.read(f.f());
+static inline const FileWrapper &operator>>(const FileWrapper &f, const LiteralIn &in) {
+  in.read(f.f);
   return f;
 }
 
-static inline const FileObj &operator>>(const FileObj &f, const char *in) {
-  LiteralIn(in).read(f.f());
+static inline const FileWrapper &operator>>(const FileWrapper &f, const char *in) {
+  LiteralIn(in).read(f.f);
   return f;
 }
 
@@ -203,8 +203,8 @@ Status peek_nows(FILE *f) {
 class NowsIn {};
 extern NowsIn nows;
 
-static inline const FileObj &operator>>(const FileObj &f, NowsIn) {
-  peek_nows(f.f()); return f;
+static inline const FileWrapper &operator>>(const FileWrapper &f, NowsIn) {
+  peek_nows(f.f); return f;
 }
 
 // Check that next character is not a whitespace.
@@ -220,19 +220,24 @@ Status peek_eof(FILE *f) {
 class EofIn {};
 extern EofIn eof;
 
-static inline const FileObj &operator>>(const FileObj &f, EofIn) {
-  peek_eof(f.f()); return f;
+static inline const FileWrapper &operator>>(const FileWrapper &f, EofIn) {
+  peek_eof(f.f); return f;
 }
 
 // TODO(pts): Add reading bool (can't ungetc fully).
 // TODO(pts): Implement write_hex etc.
 // TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
-// TODO(pts): Add operator<< for StringOutObj.
 
 template<class S, class V>static inline
-typename TypePair<FileObj, typename TStdStream<S>::tag_type>::first_type
+typename TypePair<FileWrapper, typename TStdStream<S>::tag_type>::first_type
 operator>>(const S &s, const V &v) {
-  FileObj fo(s);
+  FileWrapper fo(s);
+  fo >> v;
+  return fo;
+}
+
+template<class V>static inline FileWrapper operator>>(FILE *f, const V &v) {
+  FileWrapper fo(f);
   fo >> v;
   return fo;
 }
@@ -244,6 +249,7 @@ int main() {
   if (1) sin >> kSlash >> dec(&x8);
   if (0) sin >> dec(&x8) >> "\n";
   if (0) sout >> dec(&x8) >> "\n";
+  if (0) FileObj(sout) >> "\n";
   sout << true;
   fflush(sout);
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
