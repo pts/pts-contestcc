@@ -4,60 +4,35 @@
 
 #include <string>
 
+#include "r_fileobj.h"
 #include "r_status.h"
 
-class FileObj {
- public:
-  FileObj(FILE *f): f_(assume_notnull(f)) {}
-  FILE *f() const { return f_; }
-  operator FILE*() { return f_; }
-  Status flush() const {
-    return fflush(f_) == 0;
-  }
-  // TODO(pts): move to write(FILE *f, ...)?
-  Status write(const void *p, uintptr_t size) const {
-    // TODO(pts): Add proper error message. (Also elsewhere.)
-    return fwrite(p, 1, size, f_) == size;
-  }
-  Status write(const char *msg) const {
-    return write(msg, strlen(msg));
-  }
-  // Implements method from Writable.
-  // TODO(pts): Move this to the .cc file.
-  // !! TODO(pts): Don't add virtual methods, it's just overhead for each object.
-  //virtual void vi_write(const void *p, uintptr_t size) {
-  //  Status(fwrite(p, 1, size, f_) == size);
-  //}
-  // Implements method from Writable.
-  // TODO(pts): Move this to the .cc file.
-  //virtual void vi_putc(char c) {
-  //  Status(putc(c, f_) > 0);
-  //}
+// We need this class for operator<<, because FILE* is not an user-defined
+// type.
+struct FileWrapper {
+  inline FileWrapper(FILE *f): f(assume_notnull(f)) {}
+  inline operator FILE*() const { return f; }
+  // Don't add more fields, so FileWrapper can be copied easily.
+  FILE *f;
+};
 
-  // Most convenience functions are in `>>'.
+class FileWritable {
+ public:
+  inline FileWritable(FILE *f): f_(assume_notnull(f)) {}
+  inline FileWritable(const FileObj &fo): f_(fo.f()) {}
+  inline ~FileWritable() { if (ferror(f_)) die_on_error(); }
+  inline operator FileWrapper() const { return FileWrapper(f_); }
+  inline FILE *f() const { return f_; }
+  // This would make a call ambiguous.
+  // inline operator FILE*() const { return f_; }
  private:
+  static void die_on_error();
   FILE *f_;  // Owned externally.
 };
 
-#if 0  // TODO(pts): Remove.
-class StringWritable {
- public:
-  // This is needed for convenience in my_string << dump(42).
-  StringWritable(std::string &str): str_(&str) {}  // !! needed?
-  StringWritable(std::string *str): str_(assume_notnull(str)) {}
-  std::string *str() const { return str_; }
-  const char *c_str() const { return str_->c_str(); }
-  // !! TODO(pts): Don't add virtual methods, it's just overhead for each object.
-  //virtual void vi_write(const void *p, uintptr_t size) {
-  //  str_->append(static_cast<const char *>(p), size);
-  //}
-  //virtual void vi_putc(char c) {
-  //  str_->push_back(c);
-  //}
- private:
-  std::string *str_;
-};
-#endif
+void FileWritable::die_on_error() {
+  die("Error writing to FILE* by operator<<.");
+}
 
 class C {
  public:
@@ -132,35 +107,23 @@ template<>class TFormatter<const C&> {
   }
 };
 
-//template<>struct TFormatter<bool> {
-//  typedef void *max_type;
-//};
-
 template<class T>class TWritable {};
 
-#if 0  // TODO(pts): Remove.
-template<>struct TWritable<std::string> {
+template<>struct TWritable<FileWrapper> {
   typedef void *tag_type;
-  static inline void write(const char *data, uintptr_t size,
-                           const std::string &wr) {
-    // This const_cast is needed. Without fake consts we'd need a
-    // helper class (e.g. StringWritable) and extra templates.
-    const_cast<std::string&>(wr).append(data, size);
+  // Not using `const FileWrapper&', because FileWrapper is small.
+  static inline void write(const void *data, uintptr_t size,
+                           FileWrapper wr) {
+    // Don't check the return value, FileWritable will check ferror(...).
+    fwrite(data, 1, size, wr.f);
   }
-  static inline void write(const char *msg, const std::string &wr) {
-    const_cast<std::string&>(wr).append(msg);
+  static inline void write(const char *msg, FileWrapper wr) {
+    // Don't check the return value, FileWritable will check ferror(...).
+    fputs(msg, wr.f);
   }
-};
-#endif
-
-template<>struct TWritable<FileObj> {
-  typedef void *tag_type;
-  static inline void write(const char *data, uintptr_t size,
-                           const FileObj &wr) {
-    wr.write(data, size);  // TODO(pts): Move `Status' away from inline.
-  }
-  static inline void write(const char *msg, const FileObj &wr) {
-    wr.write(msg);  // TODO(pts): Move `Status' away from inline.
+  static inline void write(char c, const FileWrapper wr) {
+    // Don't check the return value, FileWritable will check ferror(...).
+    putc(c, wr.f);
   }
 };
 
@@ -181,6 +144,8 @@ template<class First, class Second>struct TypePair {
 // formulated in a way to prevent the template from matching if either
 // TWritable<W> or TFormatter<V> is not specialized. This is a tricky use of
 // http://en.wikipedia.org/wiki/SFINAE .
+//
+// TODO(pts): Speed up writing a single char (with putc -- error handling later?).
 
 template<class W, class V>static inline
 typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
@@ -258,7 +223,7 @@ operator<<(const W &wr, const V &v) {
 
 template<class V>static inline
 typename TypePair<std::string&,
-                  typename TFormatter<const V&>::max_type>::first_Type
+                  typename TFormatter<const V&>::max_type>::first_type
 operator<<(std::string &wstr, const V &v) {
   char buf[TFormatter<const V&>::max_buf_size];
   TFormatter<const V&>::format(v, buf);
@@ -318,11 +283,31 @@ operator<<(std::string &wstr, const V &v) {
   return wstr;
 }
 
+// Writing to FileWritable.
+
+template<class V>static inline
+typename TypePair<FileWrapper,
+                  typename TFormatter<const V&>::max_type>::first_type
+operator<<(const FileWritable &fwr, const V &v) {
+  FileWrapper wr(fwr);
+  wr << v;
+  return wr;
+}
+
+template<class V>static inline
+typename TypePair<FileWrapper,
+                  typename TFormatter<V>::max_type>::first_type
+operator<<(const FileWritable &fwr, V v) {
+  FileWrapper wr(fwr);
+  wr << v;
+  return wr;
+}
+
 // ---
 
 int main() {
-  // To make FileObj(stdout) or `fo(stdout)' work, we need `const W&'.
-  fprintf((FileObj(stdout) << 42 << -5 << C()).f(), ".\n");
+  // To make FileWritable(stdout) or `fo(stdout)' work, we need `const W&'.
+  fprintf(FileWritable(stdout) << 42 << -5 << C(), ".\n");
   // SUXX: No way to make it work like this.
   // This doesn't work without the explicit operator<<(std:: string &,...).
   // printf("%s!\n", (std::string() << 42 << -5).c_str()); // (S).
@@ -338,7 +323,7 @@ int main() {
   s << D();
   printf("</C>\n");
   s << "Foo" << std::string("Bar");
-  FileObj(stdout) << true;
+  FileWritable(stdout) << true;
   // FileObj(stdout) << 4.5;  // Doesn't compile, TFormatter<double> not defined.
   printf("S=(%s)\n", s.c_str());
   return 0;
