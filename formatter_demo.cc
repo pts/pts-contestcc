@@ -41,14 +41,14 @@ int main() {
   // FileShiftout(stdout) instead.
   FileObj(stdout) << 987 << '$';
   // To make FileShiftout(stdout) or `fo(stdout)' work, we need `const W&'.
-  fprintf(FileShiftout(stdout) << 42 << ',' << -5 << C(), ".\n");
+  fprintf(FileShiftout(stdout) << 42U << ',' << -5LL << C(), ".\n");
   // SUXX: No way to make it work like this.
   // This doesn't work without the explicit operator<<(std:: string &,...).
   // printf("%s!\n", (std::string() << 42 << -5).c_str()); // (S).
   std::string s;
   // This wouldn't work if operator<< accepted `StringWritable&' instead of
   // `const StringWritable&'.
-  printf("%s;\n", (s << 42 << -5).c_str());
+  printf("%s;\n", (s << 43ULL << -7).c_str());
   C c;
   printf("<C>\n");
   const C &cr(c);
@@ -64,7 +64,8 @@ int main() {
   }
   // Since both stdout and true are basic types, FileShiftout(...) is needed.
   // TODO(pts): Add wrap(stdout) and add wrap(',') (in addition to literal(",")).
-  FileShiftout(stdout) << true;
+  FileShiftout(stdout) << true << (int8_t)33 << (uint8_t)44;
+  FileShiftout(stdout) << (uint8_t)44;
   // FileObj(stdout) << 4.5;  // Doesn't compile, TFormatter<double> not defined.
   printf("S=(%s)\n", s.c_str());
   return 0;

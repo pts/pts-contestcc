@@ -258,7 +258,6 @@ void fmt_float(float d, char outbuf[24]) {
   }
 }
 
-
 // --- Output.
 
 class Io {};
@@ -272,8 +271,7 @@ FileObj sin(stdin);
 FileObj sout(stdout);
 FileObj serr(stderr);
 
-// TODO(pts): Don't inline write_dec.
-// TODO(pts): Add int32_t.
+// TODO(pts): Add int128_t etc. for 64-bit source.
 Status write_dec(const FileObj *fo, int64_t v) {
   char buf[21], *p = buf, *q, c;
   if (v < 0) {

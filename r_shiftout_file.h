@@ -46,6 +46,22 @@ template<>struct TWritable<FileWrapper> {
 //
 // This includes automatic error checking at the end of the output.
 
+// Helper template and specialization for keeping the operator<< with `char v'
+// argument a template.
+template<class T>class TFileShiftout {};
+template<>struct TFileShiftout<FileShiftout> {
+  typedef void *tag_type;
+};
+
+template<class W>static inline
+typename TypePair<FileWrapper,
+                  typename TFileShiftout<W>::tag_type >::first_type
+operator<<(const W &fwr, char v) {
+  FileWrapper wr(fwr);
+  wr << v;
+  return wr;
+}
+
 template<class V>static inline
 typename TypePair<FileWrapper,
                   typename TFormatter<const V&>::tag_type>::first_type

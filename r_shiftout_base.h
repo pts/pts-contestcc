@@ -21,6 +21,8 @@
 
 // TODO(pts): Check how much slower this is than manual calls to putc + ferror.
 // TODO(pts): Speed it up as putchar for stdout. Is it faster?
+//
+// This `char' also matches `int8_t' and `uint8_t'.
 template<class W>static inline
 typename TypePair<const W&, typename TWritable<W>::tag_type>::first_type
 operator<<(const W &wr, char v) {
