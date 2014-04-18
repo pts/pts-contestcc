@@ -6,19 +6,27 @@
 #include "r_die.h"
 #include "r_fileobj.h"
 #include "r_filewrapper.h"
+#include "r_sinouterr.h"
 #include "r_tformatter.h"
 #include "r_twritable.h"
 #include "r_typetuple.h"
 
 class FileShiftout {
  public:
+  // Unfortunately we need these Sin, Sout, Serr constructors for `operator<<'
+  // on FileShiftout, because C++ won't do a 2-step conversion: Sout --> FILE*
+  // --> FileShifout.
+  inline FileShiftout(const Sin&): f_(stdin) {}
+  // TODO(pts): Does `const Sout&' or `Sout' generate more efficient code?
+  inline FileShiftout(const Sout&): f_(stdout) {}
+  inline FileShiftout(const Serr&): f_(stderr) {}
   inline FileShiftout(FILE *f): f_(assume_notnull(f)) {}
   inline FileShiftout(const FileObj &fo): f_(fo.f()) {}
   inline ~FileShiftout() { if (ferror(f_)) die_on_error(); }
-  inline operator FileWrapper() const { return FileWrapper(f_); }
+  // inline operator FileWrapper() const { return FileWrapper(f_); }
   inline FILE *f() const { return f_; }
   // This would make a call ambiguous.
-  // inline operator FILE*() const { return f_; }
+  inline operator FILE*() const { return f_; }
  private:
   static void die_on_error();
   FILE *f_;  // Owned externally.
@@ -75,11 +83,11 @@ template<>struct TFileShiftout<FileShiftout> {
   typedef void *tag_type;
 };
 
-template<class W>static inline
-typename TypePair<FileWrapper,
-                  typename TFileShiftout<W>::tag_type >::first_type
-operator<<(const W &fwr, char v) {
-  FileWrapper wr(fwr);
+// Made this a template for symmetry of error reporting.
+template<class V>static inline
+typename TypePair<FileWrapper, typename TXChar<V>::tag_type>::first_type
+operator<<(const FileShiftout &fwr, V v) {
+  FileWrapper wr(fwr.f());
   wr << v;
   return wr;
 }
@@ -88,7 +96,7 @@ template<class V>static inline
 typename TypePair<FileWrapper,
                   typename TFormatter<const V&>::tag_type>::first_type
 operator<<(const FileShiftout &fwr, const V &v) {
-  FileWrapper wr(fwr);
+  FileWrapper wr(fwr.f());
   wr << v;
   return wr;
 }
@@ -97,7 +105,7 @@ template<class V>static inline
 typename TypePair<FileWrapper,
                   typename TFormatter<V>::tag_type>::first_type
 operator<<(const FileShiftout &fwr, V v) {
-  FileWrapper wr(fwr);
+  FileWrapper wr(fwr.f());
   wr << v;
   return wr;
 }
@@ -106,7 +114,7 @@ template<class V>static inline
 typename TypePair<FileWrapper,
                   typename V::format_append_type>::first_type
 operator<<(const FileShiftout &fwr, const V &v) {
-  FileWrapper wr(fwr);
+  FileWrapper wr(fwr.f());
   wr << v;
   return wr;
 }

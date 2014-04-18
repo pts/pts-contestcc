@@ -5,7 +5,7 @@
 
 #include "r_str_piece.h"
 #include "r_tformatter.h"
-#include "r_tstring.h"
+#include "r_txchar.h"
 #include "r_twritable.h"
 #include "r_typetuple.h"
 
@@ -105,9 +105,10 @@ operator<<(const W &wr, const V &v) {
 // const_cast.
 
 // Made this a template for symmetry of error reporting.
-template<class W>static inline
-typename TypePair<std::string&, typename TString<W>::tag_type >::first_type
-operator<<(W &wstr, char v) {
+template<class V>static inline
+typename TypePair<std::string&,
+                  typename TXChar<V>::tag_type>::first_type
+operator<<(std::string &wstr, V v) {
   wstr.push_back(v);  // Optimized implementation.
   return wstr;
 }

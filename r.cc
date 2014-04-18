@@ -18,6 +18,10 @@
 
 #include <string>
 
+// TODO(pts): Make input parsing more generic, i.e. make it work on
+// std::string. This is a lot of work and can lead to code duplication,
+// because we want to make the FILE* path fast.
+
 // For eGlibc, math.h defines this, for uClibc, it doesn't.
 // #define NAN (__builtin_nanf (""))
 
@@ -216,30 +220,16 @@ static inline const FileObj &operator>>(const FileObj &f, EofIn) {
   peek_eof(f.f()); return f;
 }
 
-// TODO(pts): Added reading bool (can't ungetc fully).
+// TODO(pts): Add reading bool (can't ungetc fully).
 
 // --- Output.
 
 class Io {};
 extern Io io;
 
-// TODO(pts): These are not safe if multi-module initialization is
-// performed, they can be out of order.
-FileObj sin(stdin);
-// Any of these work:
-//
-//   sout << "Hello\n";
-//   fflush(sout);
-FileObj sout(stdout);
-FileObj serr(stderr);
-
 // TODO(pts): Implement write_hex etc.
 
-// io << stdout << "Hello!\n";
-static inline FileObj operator<<(Io, FILE *f) { return f; }
-// io >> stdin >> ",";
-// TODO(pts): wrap(stdin) instead of `io >> stdin'.
-static inline FileObj operator>>(Io, FILE *f) { return f; }
+// TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
 
 // TODO(pts): Add operator<< for StringOutObj.
 
@@ -272,5 +262,6 @@ int main() {
   std::string b = read_word(stdin);
   printf("b=(%s)\n", b.c_str());
   stdin >> literal("\n") >> eof;  // Doesn't compile without literal(...).
+  // TODO(pts): if (0) sin >> "\n";
   return 0;
 }

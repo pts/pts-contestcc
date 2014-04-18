@@ -37,9 +37,16 @@ template<>class TFormatter<const C&> {
 };
 
 int main() {
-  // This also does error checking, but it's a tiny bit slower than using
-  // FileShiftout(stdout) instead.
-  FileObj(stdout) << 987 << '$';
+  // TODO(pts): Which of these does error checking?
+  FileShiftout(stdout) << 34LL << '$';  // Does error checking (because of FileShiftout).
+  FileObj(stdout) << 987 << '$';  // Does error checking, implicit FileShiftout.
+  FileWrapper(stdout) << "Hell" << -42;  // No error checking (because of FileWrapper).
+  FileWrapper(sout) << "Help" << 567;  // No error checking (because of FileWrapper).
+  sout << 65 << '%';  // Does error checking.
+  sout << 'Z' << 66;  // Does error checking.
+  stdout << StrPiece("Say", 3);
+  stdout << std::string("Fox");
+  // stdout << 65 << '%';  // Doesn't compile, because stdout and 65 are basic types.
   // To make FileShiftout(stdout) or `fo(stdout)' work, we need `const W&'.
   fprintf(FileShiftout(stdout) << 42U << ',' << -5LL << C(), ".\n");
   // SUXX: No way to make it work like this.
@@ -67,7 +74,9 @@ int main() {
   // TODO(pts): Add wrap(stdout) and add wrap(',') (in addition to literal(",")).
   FileShiftout(stdout) << true << (int8_t)33 << (uint8_t)44;
   FileShiftout(stdout) << (uint8_t)44 << '&' << 1.L / 3;
+  FileShiftout(stdout) << std::string("ZAP");
   // FileObj(stdout) << 4.5;  // Doesn't compile, TFormatter<double> not defined.
   printf("S=(%s)\n", s.c_str());
+  fflush(sout);
   return 0;
 }

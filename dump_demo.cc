@@ -15,7 +15,7 @@ int main() {
   dump("Foo: ", 7, 6, 5);
 
   // TODO(pts): stdout << dump(42) << "\n";
-  std::string s; s << dump(42) << dump(-5);  // !! << ".";
+  std::string s; s << dump(42) << dump(-5) << '.';
   // s << Formatter<const char*>(";.");  // Works.
   // s << Formatter(";.");  // Doesn't compile.
   s << ";." << "x" << msg << -42 << msg;
