@@ -67,6 +67,19 @@ class C {
   C& operator=(const C&) { printf("=C\n"); return *this; }
 };
 
+class D {
+ public:
+  D() { printf("+D\n"); }
+  ~D() { printf("~D\n"); }
+  D(const D&) { printf("*D\n"); }
+  D& operator=(const D&) { printf("=D\n"); return *this; }
+
+  typedef void *format_append_type;  // Corresponds to format_append.
+  void format_append(std::string *out) const {
+    out->append("D()");
+  }
+};
+
 template<class V>class TFormatter {};
 
 template<>class TFormatter<int> {
@@ -106,10 +119,8 @@ template<>class TFormatter<std::string> {
 template<>class TFormatter<const C&> {
  public:
   typedef void *append_type;
-  // TODO(pts): Also implement as D::format_append.
   static void format_append(const C&, std::string *out) {
     out->append("C()");
-    // printf("format<C>(...)\n");
   }
 };
 
@@ -213,6 +224,17 @@ operator<<(const W &wr, V v) {
   return wr;
 }
 
+template<class W, class V>static inline
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename V::format_append_type >::first_type
+operator<<(const W &wr, const V &v) {
+  std::string str;
+  v.format_append(&str);
+  // TODO(pts): Specialize for W=std::string.
+  TWritable<W>::write(str.data(), str.size(), wr);
+  return wr;
+}
+
 int main() {
   // To make FileObj(stdout) or `fo(stdout)' work, we need `const W&'.
   fprintf((FileObj(stdout) << 42 << -5).f(), ".\n");
@@ -228,6 +250,7 @@ int main() {
   const C &cr(c);
   s << c;   // No copy of C.
   s << cr;  // No copy of C.
+  s << D();
   printf("</C>\n");
   s << "Foo" << std::string("Bar");
   printf("S=(%s)\n", s.c_str());
