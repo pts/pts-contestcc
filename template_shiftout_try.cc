@@ -39,6 +39,7 @@ class FileObj {
   FILE *f_;  // Owned externally.
 };
 
+#if 0
 class StringWritable {
  public:
   // This is needed for convenience in my_string << dump(42).
@@ -56,6 +57,7 @@ class StringWritable {
  private:
   std::string *str_;
 };
+#endif
 
 class C {
  public:
@@ -107,14 +109,16 @@ template<class First, class Second>struct TypePair {
 template<class T>class TWritable {};
 
 template<>struct TWritable<std::string> {
-  typedef std::string &ref_type;
-  static inline void write(const char *msg, std::string &wr) {
-    wr.append(msg);
+  typedef const std::string &constref_type;
+  static inline void write(const char *msg, const std::string &wr) {
+    // This const_cast is needed. Without fake consts we'd need a
+    // helper class (e.g. StringWritable) and extra templates.
+    const_cast<std::string&>(wr).append(msg);
   }
 };
 
 template<>struct TWritable<FileObj> {
-  typedef FileObj &ref_type;
+  typedef const FileObj &constref_type;
   static inline void write(const char *msg, const FileObj &wr) {
     wr.write(msg);  // TODO(pts): Move `Status' away from inline.
   }
@@ -125,63 +129,28 @@ template<>struct TWritable<FileObj> {
 // not specialized. This is a tricky use of
 // http://en.wikipedia.org/wiki/SFINAE .
 template<class W, class V>static inline
-typename TypePair<typename TWritable<W>::ref_type,
+typename TypePair<typename TWritable<W>::constref_type,
                   typename TFormatter<const V&>::max_type >::first_type
-operator<<(W &wr, const V &v) {
+operator<<(const W &wr, const V &v) {
   char buf[TFormatter<const V&>::max_buf_size];
   TFormatter<const V&>::format(v, buf);
   TWritable<W>::write(buf, wr);
-  // TFormatter::<V> format_short(V);
-  //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 
 template<class W, class V>static inline
-typename TypePair<typename TWritable<W>::ref_type,
+typename TypePair<typename TWritable<W>::constref_type,
                   typename TFormatter<V>::max_type >::first_type
-operator<<(W &wr, V v) {
+operator<<(const W &wr, V v) {
   char buf[TFormatter<V>::max_buf_size];
   TFormatter<V>::format(v, buf);
   TWritable<W>::write(buf, wr);
-  // TFormatter::<V> format_short(V);
-  //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
 
-#if 0
-// This doesn't make (S) work, because std::string() is not an l-value.
-// But makes `s << ...' work.
-//
-// The return type is just `StringWritable', but it's formulated in a way to
-// prevent the template from matching if either TWritable<W> or
-// TFormatter<V> is not specialized. This is a tricky use of
-// http://en.wikipedia.org/wiki/SFINAE .
-template<class V>static inline
-typename TypePair<StringWritable,
-                  typename TFormatter<V>::tag_type >::first_type
-operator<<(std::string &str, V v) {
-  StringWritable sw(&str);
-  sw << v;
-  return sw;
-}
-
-template<class V>static inline
-typename TypePair<StringWritable,
-                  typename TFormatter<const V&>::tag_type >::first_type
-operator<<(std::string &str, const V &v) {
-  StringWritable sw(&str);
-  sw << v;
-  return sw;
-}
-#endif
-
-FileObj fo(FILE *f) { return FileObj(f); }
-
 int main() {
-  FileObj sout(stdout);
-  // TODO(pts): To make FileObj(stdout) or `fo(stdout)' work, we need `const W&'.
-  fprintf((sout << 42 << -5).f(), ".\n");
-  fprintf((fo(stdout) << 42 << -5).f(), ".\n");
+  // To make FileObj(stdout) or `fo(stdout)' work, we need `const W&'.
+  fprintf((FileObj(stdout) << 42 << -5).f(), ".\n");
   // SUXX: No way to make it work like this.
   // This doesn't work without the explicit operator<<(std:: string &,...).
   // printf("%s!\n", (std::string() << 42 << -5).c_str()); // (S).
