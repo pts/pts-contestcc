@@ -5,6 +5,7 @@
 // C++ disadvantage: uninitialized variables (there is a warning)
 // C++ disadvantage: no automatic memory management (not a big problem)
 // C++ disadvantage: no regexps (not a problem most of the time)
+// C++ disadvantage: printf on long double doesn't work on Windows (MinGW).
 
 #include "r_status.h"
 #include "r_fileobj.h"
@@ -216,48 +217,6 @@ static inline const FileObj &operator>>(const FileObj &f, EofIn) {
 
 // TODO(pts): Added reading bool (can't ungetc fully).
 
-// --- Float formatting.
-
-// TODO(pts): Also for long double.
-void fmt_double(double d, char outbuf[32]) {
-  // Assuming IEEE 754 64-bit double.
-  struct AssertDoubleSizeIs8 { int DoubleSizeIs8 : sizeof(d) == 8; };
-  char *p;
-  int c;
-  sprintf(outbuf, "%.17g", d);
-  for (c = 0, p = outbuf; *p && *p != 'e'; ++p) {
-    c += *p - '0' + 0U <= 9U;
-  }
-  /* Used all digits, e.g. "1.2300000000000001e+202", "0.3333333333333333" */
-  if (c >= 17) {  /* Can be 17 or 18. */
-    char tmp[32];
-    double d16;
-    sprintf(tmp, "%.16g", d);
-    if (1 == sscanf(tmp, "%lf", &d16) && d == d16) {
-      strcpy(outbuf, tmp);
-    }
-  }
-}
-
-void fmt_float(float d, char outbuf[24]) {
-  // Assuming IEEE 754 32-bit float.
-  struct AssertFloatSizeIs4 { int FloatSizeIs4 : sizeof(d) == 4; };
-  char *p;
-  int c;
-  sprintf(outbuf, "%.9g", d);
-  for (c = 0, p = outbuf; *p && *p != 'e'; ++p) {
-    c += *p - '0' + 0U <= 9U;
-  }
-  if (c >= 9) {
-    char tmp[24];
-    float d8;
-    sprintf(tmp, "%.8g", d);
-    if (1 == sscanf(tmp, "%f", &d8) && d == d8) {
-      strcpy(outbuf, tmp);
-    }
-  }
-}
-
 // --- Output.
 
 class Io {};
@@ -271,36 +230,6 @@ FileObj sin(stdin);
 FileObj sout(stdout);
 FileObj serr(stderr);
 
-// TODO(pts): Add int128_t etc. for 64-bit source.
-Status write_dec(const FileObj *fo, int64_t v) {
-  char buf[21], *p = buf, *q, c;
-  if (v < 0) {
-    *p++ = '-';
-    v = -v;
-  }
-  q = p;
-  do { *q++ = v % 10 + '0'; v /= 10; } while (v > 0);
-  *q-- = '\0';
-  while (p < q) {  // Reverse.
-    c = *p;
-    *p++ = *q;
-    *q-- = c;
-  }
-  return fo->write(buf);
-}
-
-Status write_dec(const FileObj *fo, uint64_t v) {
-  char buf[20], *p = buf, *q, c;
-  q = p;
-  do { *q++ = v % 10 + '0'; v /= 10; } while (v > 0);
-  *q-- = '\0';
-  while (p < q) {  // Reverse.
-    c = *p;
-    *p++ = *q;
-    *q-- = c;
-  }
-  return fo->write(buf);
-}
 // TODO(pts): Implement write_hex etc.
 
 // io << stdout << "Hello!\n";

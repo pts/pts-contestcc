@@ -53,6 +53,7 @@ int main() {
   printf("<C>\n");
   const C &cr(c);
   s << c;   // No copy of C.
+  s << 34.56 << '+' << 34.56f;
   s << '+' << cr;  // No copy of C.
   s << D();
   printf("</C>\n");
@@ -65,7 +66,7 @@ int main() {
   // Since both stdout and true are basic types, FileShiftout(...) is needed.
   // TODO(pts): Add wrap(stdout) and add wrap(',') (in addition to literal(",")).
   FileShiftout(stdout) << true << (int8_t)33 << (uint8_t)44;
-  FileShiftout(stdout) << (uint8_t)44;
+  FileShiftout(stdout) << (uint8_t)44 << '&' << 1.L / 3;
   // FileObj(stdout) << 4.5;  // Doesn't compile, TFormatter<double> not defined.
   printf("S=(%s)\n", s.c_str());
   return 0;

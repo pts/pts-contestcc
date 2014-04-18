@@ -75,6 +75,35 @@ template<>class TFormatter<uint64_t> {
 
 // TODO(pts): Implement write_hex somewhere else.
 
+// --- Floating point types.
+
+
+template<>class TFormatter<float> {
+ public:
+  typedef void *tag_type;
+  enum max_type { max_buf_size = 17 };
+  static void format(float v, char *buf);
+};
+
+template<>class TFormatter<double> {
+ public:
+  typedef void *tag_type;
+  // len(repr(float(-1.0000012345e-300))) == 24.
+  enum max_type { max_buf_size = 25 };
+  static void format(double v, char *buf);
+};
+
+template<>class TFormatter<long double> {
+ public:
+  typedef void *tag_type;
+  // len('-1.18973149535723176502e+4932') == 29.
+  // len('-3.64519953188247460253e-4951') == 29.
+  // Using 32 instead of 30 as a safety margin.
+  enum max_type { max_buf_size = 32 };
+  static void format(long double v, char *buf);
+};
+
+
 // --- String-like types.
 
 template<>class TFormatter<const char*> {
