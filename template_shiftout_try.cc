@@ -71,7 +71,6 @@ template<class V>class TFormatter {};
 
 template<>class TFormatter<int> {
  public:
-  typedef void *tag_type;
   enum max_type { max_buf_size = 12 };
   static void format(int v, char *buf) {
     sprintf(buf, "%d", v);  // TODO(pts): Faster.
@@ -80,6 +79,9 @@ template<>class TFormatter<int> {
 
 template<>class TFormatter<const char*> {
  public:
+  // TODO(pts): Write choose instructions.
+  // If both piece_type and append_type are fesible, use append_type if
+  // with piece_type you'd do dynamic memory allocation.
   typedef void *piece_type;
   inline TFormatter(const char *v): data_(v), size_(strlen(v)) {}
   inline const char *data() const { return data_; }
@@ -103,17 +105,16 @@ template<>class TFormatter<std::string> {
 
 template<>class TFormatter<const C&> {
  public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 4 };
-  // TODO(pts): Implement this as generic callback.
-  static void format(const C&, char *buf) {
-    strcpy(buf, "C()");
+  typedef void *append_type;
+  // TODO(pts): Also implement as D::format_append.
+  static void format_append(const C&, std::string *out) {
+    out->append("C()");
     // printf("format<C>(...)\n");
   }
 };
 
 //template<>struct TFormatter<bool> {
-//  typedef void *tag_type;
+//  typedef void *max_type;
 //};
 
 template<class T>class TWritable {};
@@ -187,6 +188,28 @@ typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
 operator<<(const W &wr, V v) {
   TFormatter<V> fmt(v);
   TWritable<W>::write(fmt.data(), fmt.size(), wr);
+  return wr;
+}
+
+template<class W, class V>static inline
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename TFormatter<const V&>::append_type >::first_type
+operator<<(const W &wr, const V &v) {
+  std::string str;
+  TFormatter<const V&>::format_append(v, &str);
+  // TODO(pts): Specialize for W=std::string.
+  TWritable<W>::write(str.data(), str.size(), wr);
+  return wr;
+}
+
+template<class W, class V>static inline
+typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
+                     typename TFormatter<V>::append_type >::first_type
+operator<<(const W &wr, V v) {
+  std::string str;
+  TFormatter<V>::format_append(v, &str);
+  // TODO(pts): Specialize for W=std::string.
+  TWritable<W>::write(str.data(), str.size(), wr);
   return wr;
 }
 
