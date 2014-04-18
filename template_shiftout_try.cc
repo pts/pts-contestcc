@@ -55,14 +55,26 @@ class StringWritable {
   std::string *str_;
 };
 
-template<class T>class TWritable {};
+template<class V>class TFormatter {};
 
-template<>struct TWritable<StringWritable> {
-  typedef const StringWritable &constref_type;
+template<>struct TFormatter<int> {
+  typedef void *tag_type;
 };
 
-template<>struct TWritable<FileObj> {
+//template<>struct TFormatter<bool> {
+//  typedef void *tag_type;
+//};
+
+template<class T, class V>class TWritable {};
+
+template<class V>struct TWritable<StringWritable, V> {
+  typedef const StringWritable &constref_type;
+  //typedef TFormatter<V> formatter_type;
+};
+
+template<class V>struct TWritable<FileObj, V> {
   typedef const FileObj &constref_type;
+  //typedef TFormatter<V> formatter_type;
 };
 
 // Goal (1): Unify these two below, and make them write the int.
@@ -72,8 +84,9 @@ template<>struct TWritable<FileObj> {
 //template<class T>static inline typename TWritable<T>::constref_type operator<<(
 //    typename TWritable<T>::constref_type wr, int) {
 
-template<class T>static inline typename TWritable<T>::constref_type operator<<(
-    const T &wr, int) {
+template<class T, class V>static inline typename TWritable<T, typename TFormatter<V>::tag_type >::constref_type operator<<(
+    const T &wr, const V &v) {
+  (void)v;
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
 }
@@ -85,6 +98,7 @@ template<class T>static inline typename TWritable<T>::constref_type operator<<(
 
 // This doesn't make (S) work, because std::string() is not an l-value.
 // But makes `s << ...' work.
+// TODO(pts): Make this a template.
 StringWritable operator<<(std::string &str, int) {
   StringWritable sw(&str);
   // !! ...
@@ -100,5 +114,7 @@ int main() {
   // This wouldn't work if operator<< accepted `StringWritable&' instead of
   // `const StringWritable&'.
   printf("%s;\n", (s << 42 << -5).c_str());
+  // s << "Foo";
+  FileObj(stdout) << true;
   return 0;
 }
