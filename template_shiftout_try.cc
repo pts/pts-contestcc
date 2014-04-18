@@ -67,14 +67,14 @@ template<class V>class TFormatter {};
 
 template<>struct TFormatter<int> {
   typedef void *tag_type;
-  void format(int v) {
+  static void format(int v) {
     printf("format<int>(%d)\n", v);
   }
 };
 
 template<>struct TFormatter<const C&> {
   typedef void *tag_type;
-  void format(const C&) {
+  static void format(const C&) {
     printf("format<C>(...)\n");
   }
 };
@@ -112,8 +112,9 @@ template<>struct TWritable<FileObj> {
 template<class W, class V>static inline
 typename TypePair<typename TWritable<W>::constref_type,
                   typename TFormatter<V>::tag_type >::first_type
-operator<<(const W &wr, const V &v) {
+operator<<(const W &wr, V v) {
   (void)v;
+  TFormatter<V>::format(v);
   // TFormatter::<V> format_short(V);
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
   return wr;
@@ -144,6 +145,11 @@ int main() {
   // This wouldn't work if operator<< accepted `StringWritable&' instead of
   // `const StringWritable&'.
   printf("%s;\n", (s << 42 << -5).c_str());
+  C c;
+  printf("<C>\n");
+  const C &cr(c);
+  s << cr;  // SUXX: Doesn't compile, wants to match V = C (rather than V = const C&).
+  printf("</C>\n");
   // s << "Foo";
   // FileObj(stdout) << true;
   return 0;
