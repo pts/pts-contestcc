@@ -127,6 +127,12 @@ template<>struct TWritable<FileWrapper> {
   }
 };
 
+template<class T>class TString {};
+
+template<>struct TString<std::string> {
+  typedef void *tag_type;
+};
+
 template<class First, class Second, class Third>struct TypeTriplet {
   typedef First first_type;
   typedef Second second_type;
@@ -144,8 +150,15 @@ template<class First, class Second>struct TypePair {
 // formulated in a way to prevent the template from matching if either
 // TWritable<W> or TFormatter<V> is not specialized. This is a tricky use of
 // http://en.wikipedia.org/wiki/SFINAE .
-//
-// TODO(pts): Speed up writing a single char (with putc -- error handling later?).
+
+// TODO(pts): Check how much slower this is than manual calls to putc + ferror.
+// TODO(pts): Speed it up as putchar for stdout. Is it faster?
+template<class W>static inline
+typename TypePair<const W&, typename TWritable<W>::tag_type>::first_type
+operator<<(const W &wr, char v) {
+  TWritable<W>::write(v, wr);
+  return wr;
+}
 
 template<class W, class V>static inline
 typename TypeTriplet<const W&, typename TWritable<W>::tag_type,
@@ -220,6 +233,14 @@ operator<<(const W &wr, const V &v) {
 // We could implement a TWritable<std::string>, but some of the
 // implementations below are a bit more optimized. They also don't need
 // const_cast.
+
+// Made this a template for symmetry of error reporting.
+template<class W>static inline
+typename TypePair<std::string&, typename TString<W>::tag_type >::first_type
+operator<<(W &wstr, char v) {
+  wstr.push_back(v);  // Optimized implementation.
+  return wstr;
+}
 
 template<class V>static inline
 typename TypePair<std::string&,
@@ -307,7 +328,7 @@ operator<<(const FileWritable &fwr, V v) {
 
 int main() {
   // To make FileWritable(stdout) or `fo(stdout)' work, we need `const W&'.
-  fprintf(FileWritable(stdout) << 42 << -5 << C(), ".\n");
+  fprintf(FileWritable(stdout) << 42 << ',' << -5 << C(), ".\n");
   // SUXX: No way to make it work like this.
   // This doesn't work without the explicit operator<<(std:: string &,...).
   // printf("%s!\n", (std::string() << 42 << -5).c_str()); // (S).
@@ -319,7 +340,7 @@ int main() {
   printf("<C>\n");
   const C &cr(c);
   s << c;   // No copy of C.
-  s << cr;  // No copy of C.
+  s << '+' << cr;  // No copy of C.
   s << D();
   printf("</C>\n");
   s << "Foo" << std::string("Bar");
