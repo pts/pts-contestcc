@@ -55,6 +55,9 @@ class StringWritable {
   std::string *str_;
 };
 
+// Goal (1): Unify these two below, and make them write the int.
+// Goal (2): Add support for writing `const char*', still unified.
+
 //template<class T>static inline typename Formatter<T>::return_type
 const StringWritable &operator<<(const StringWritable &wr, int) {
   //Formatter<T>::format(const_cast<StringWritable*>(&wr), t);  // TODO(pts): Fix const_cast.
@@ -66,11 +69,18 @@ const FileObj &operator<<(const FileObj &wr, int) {
   return wr;
 }
 
+// This doesn't make (S) work, because std::string() is not an l-value.
+//StringWritable operator<<(std::string &str, int) {
+//  StringWritable sw(str);
+//  // !! ...
+//  return sw;
+//}
+
 int main() {
   fprintf((FileObj(stdout) << 42 << -5).f(), ".\n");
-  // SUXX: This doesn't work, no automatic conversion. Why?
-  // TODO(pts): Add manual conversion.
-  // printf("%s;\n", (std::string() << 42 << -5).c_str());
+  // SUXX: No way to make it work like this.
+  // This doesn't work without the explicit operator<<(std:: string &,...).
+  // printf("%s!\n", (std::string() << 42 << -5).c_str()); // (S).
   std::string s;
   // This wouldn't work if operator<< accepted `StringWritable&' instead of
   // `const StringWritable&'.
