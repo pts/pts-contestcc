@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "r_dump_basic.h"
+
 // We don't care too much about performane (hence no `static inline' for
 // functions etc.), because dumping is for debugging.
 
@@ -34,6 +36,10 @@ template<>void wrdump(int v, std::string *out) {
   char buf[TFormatter<int>::max_buf_size];
   TFormatter<int>::format(v, buf);
   out->append(buf);
+}
+
+template<>void wrdump(char v, std::string *out) {
+  wrdump_low(v, out);
 }
 
 template<class T>void wrdump(const T *a, uintptr_t size, std::string *out) {

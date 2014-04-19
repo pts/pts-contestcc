@@ -25,7 +25,7 @@ int main() {
   // of `<<` are basic types, so `operator<<' declarations are not
   // considered.
   FileObj(stdout) << "HI:" << dump(42) << dump(-6);
-  stdout << dump(-7) << " " << dump(89);
+  stdout << dump(-7) << " " << dump(89) << dump('\'') << dump('\t') << ' ' << dump('\376') << dump('x');
   printf("\n");
 
   return 0;

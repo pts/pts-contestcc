@@ -1,4 +1,5 @@
-OBJS = r_die.o r_shiftin.o r_shiftout_file.o r_tformatter_basic.o
+OBJS = r_die.o r_shiftin.o r_shiftout_file.o r_tformatter_basic.o \
+    r_dump_basic.o
 CXXFLAGS = -s -O2 -W -Wall
 CXX = g++
 
