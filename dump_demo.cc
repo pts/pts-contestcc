@@ -1,7 +1,9 @@
 #include <stdint.h>
 
 #include "r_dump.h"
+#include "r_dump_stl.h"
 
+// TODO(pts): Add a separator.
 #define DUMP(type) dump(#type, (type)(0))
 
 class C {};
@@ -36,7 +38,7 @@ int main() {
   // TODO(pts): Undefined reference to sout with g++ -O0.
   sout << "---\n";
 
-  // dump(C());  // This won't compile. 
+  // dump(C());  // This won't compile, missing wrdump for C.
 
   char const *msg = "Bye";
   int a[3] = {55, 66, 77};
@@ -48,6 +50,19 @@ int main() {
   dump(-42);
   dump(a);
   dump(b);
+  dump(std::list<int>());
+  dump(std::set<int>());
+  dump(std::multiset<int>());
+
+#if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
+  sout << "--- C++11:\n";
+  dump(std::array<double, 3>());
+  // To avoid warning here: g++ -std=c++0x -fno-deduce-init-list
+  dump(std::initializer_list<int>({8, 9, 10}));
+  // dump({8, 9, 10});  // This doesn't compile, can't infer type int.
+  dump(std::forward_list<int>({8, 9, 10}));
+#endif
+
   dump("Answer: ", 42);
   dump("Foo: ", 7, 6, 5);
 

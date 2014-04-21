@@ -9,9 +9,6 @@
 #include "r_tformatter_basic.h"
 
 #include <string>
-#include <vector>
-// TODO(pts): Can we provide wrdump(..., const std::set<T> &a) only if
-// std::set is available (e.g. after `#include <set>')?
 
 #include <stdio.h>
 #include <stdint.h>
@@ -22,11 +19,14 @@
 // We don't care too much about performane (hence no `static inline' for
 // functions etc.), because dumping is for debugging.
 
-// TODO(pts): Add dumping of more types.
+// TODO(pts): !! Add dumping of std::string.
 
 // Making wrdump a template even for non-parametric types such as signed char
 // and string, so that g++ won't report the list of overloaded non-template
 // functions.
+
+// Don't declare this, it creates an alternative of the wrdump()s below.
+// template<class T>void wrdump(T, std::string *out);
 
 template<class T>class TDumpCustom {};
 template<>struct TDumpCustom<char> { typedef void *tag_type; };
@@ -93,10 +93,44 @@ void wrdump(const T (&v)[S], std::string *out) {
   wrdump(v, S, out);
 }
 
-// TODO(pts): Move to r_stl_formatters.h.
-template<class T>static inline
-void wrdump(const std::vector<T> &v, std::string *out) {
+// r_dump_stl.h defines instances of TDumpDataSize.
+template<class T>class TDumpDataSize {};
+template<class T>static inline void wrdump(
+    const T &v,
+    typename TypePair<std::string*, typename TDumpDataSize<T>::tag_type>
+        ::first_type out) {
   wrdump(v.data(), v.size(), out);
+}
+
+// r_dump_stl.h defines instances of TDumpBeginEnd.
+template<class T>class TDumpBeginEnd {};
+template<class T>static inline void wrdump(
+    const T &v,
+    typename TypePair<std::string*, typename TDumpBeginEnd<T>::tag_type>
+        ::first_type out) {
+  // v.begin() and v.end() are pointers.
+  wrdump(v.begin(), v.end() - v.begin(), out);
+}
+
+// r_dump_stl.h defines instances of TDumpForward.
+template<class T>class TDumpForward {};
+template<class T>static inline
+void wrdump_forward(const T &v, std::string *out) {
+  out->push_back('{');
+  const typename T::const_iterator end = v.end();
+  bool do_comma = false;
+  for (typename T::const_iterator it = v.begin(); it != end; ++it) {
+    if (do_comma) out->append(", ", 2);
+    wrdump(*it, out);
+    do_comma = true;
+  }
+  out->push_back('}');
+}
+template<class T>static inline void wrdump(
+    const T &v,
+    typename TypePair<std::string*, typename TDumpForward<T>::tag_type>
+        ::first_type out) {
+  wrdump_forward(v, out);
 }
 
 template<class T>void dump_buffnl(FILE *f, const T &t) {
