@@ -17,29 +17,63 @@
 #include <stdint.h>
 
 #include "r_dump_basic.h"
+#include "r_typetuple.h"
 
 // We don't care too much about performane (hence no `static inline' for
 // functions etc.), because dumping is for debugging.
 
 // TODO(pts): Add dumping of more types.
 
-// Making it a template so that multiple .cc files can define it.
-template<class T>void wrdump(T, std::string *out);
+// Making wrdump a template even for non-parametric types such as signed char
+// and string, so that g++ won't report the list of overloaded non-template
+// functions.
 
-// TODO(pts): Add most of the implementations to the .cc file -- or at least
-// share if included multiple times.
-template<>void wrdump(bool v, std::string *out) {
-  out->append(v ? "true" : "false");
+template<class T>class TDumpCustom {};
+template<>struct TDumpCustom<char> { typedef void *tag_type; };
+template<class T>static inline void wrdump(
+    T v,
+    typename TypePair<std::string*, typename TDumpCustom<T>::tag_type>
+        ::first_type out) {
+  wrdump_low(v, out);
 }
 
-template<>void wrdump(int v, std::string *out) {
+// `char', `signed char' and `unsigned char' are distinct types.
+template<class T>class TDump8 {};
+template<>struct TDump8<signed char>   { typedef void *tag_type; };
+template<>struct TDump8<unsigned char> { typedef void *tag_type; };
+template<class T>static inline void wrdump(
+    T v,
+    typename TypePair<std::string*, typename TDump8<T>::tag_type>
+        ::first_type out) {
   char buf[TFormatter<int>::max_buf_size];
   TFormatter<int>::format(v, buf);
   out->append(buf);
 }
 
-template<>void wrdump(char v, std::string *out) {
-  wrdump_low(v, out);
+// Basic types which get dumped using a max_buf_size formatter.
+template<class T>class TDumpBasic {};
+template<>struct TDumpBasic<bool>               { typedef void *tag_type; };
+template<>struct TDumpBasic<signed   short>     { typedef void *tag_type; };
+template<>struct TDumpBasic<unsigned short>     { typedef void *tag_type; };
+template<>struct TDumpBasic<signed   int>       { typedef void *tag_type; };
+template<>struct TDumpBasic<unsigned int>       { typedef void *tag_type; };
+template<>struct TDumpBasic<signed   long>      { typedef void *tag_type; };
+template<>struct TDumpBasic<unsigned long>      { typedef void *tag_type; };
+template<>struct TDumpBasic<signed   long long> { typedef void *tag_type; };
+template<>struct TDumpBasic<unsigned long long> { typedef void *tag_type; };
+template<>struct TDumpBasic<float>              { typedef void *tag_type; };
+template<>struct TDumpBasic<double>             { typedef void *tag_type; };
+template<>struct TDumpBasic<long double>        { typedef void *tag_type; };
+
+// TODO(pts): Add most of the implementations to the .cc file -- or at least
+// share if included multiple times.
+template<class T>static inline void wrdump(
+    T v,
+    typename TypePair<std::string*, typename TDumpBasic<T>::tag_type>
+        ::first_type out) {
+  char buf[TFormatter<T>::max_buf_size];
+  TFormatter<T>::format(v, buf);
+  out->append(buf);
 }
 
 template<class T>void wrdump(const T *a, uintptr_t size, std::string *out) {
@@ -54,12 +88,14 @@ template<class T>void wrdump(const T *a, uintptr_t size, std::string *out) {
   out->push_back('}');
 }
 
-template<class T, uintptr_t S>void wrdump(const T (&v)[S], std::string *out) {
+template<class T, uintptr_t S>static inline
+void wrdump(const T (&v)[S], std::string *out) {
   wrdump(v, S, out);
 }
 
 // TODO(pts): Move to r_stl_formatters.h.
-template<class T>void wrdump(const std::vector<T> &v, std::string *out) {
+template<class T>static inline
+void wrdump(const std::vector<T> &v, std::string *out) {
   wrdump(v.data(), v.size(), out);
 }
 
@@ -67,7 +103,9 @@ template<class T>void dump_buffnl(FILE *f, const T &t) {
   std::string out;
   wrdump(t, &out);
   out.push_back('\n');
-  Status(fwrite(out.data(), 1, out.size(), f) == out.size());
+  if (fwrite(out.data(), 1, out.size(), f) != out.size()) {
+    die("Dumping failed.");
+  }
 }
 
 // TODO(pts): Try to unify t_ and is_dumped_ using NULL.

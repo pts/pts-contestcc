@@ -23,55 +23,54 @@ template<>class TFormatter<bool> {
 
 // --- Integral types.
 
+void format_i32(int32_t  v, char *buf);
+void format_u32(uint32_t v, char *buf);
+void format_i64(int64_t  v, char *buf);
+void format_u64(uint64_t v, char *buf);
+
 // No need to define TFormatter<int8_t> and TFormatter<uint8_t>, because
 // char matches these types, and the template with the `char v' argument
 // defined in r_shiftout_base.h already formats char.
+//
+// Specifying `int' instead of `int32_t' etc. in template arguments, because
+// sizeof(int) == sizeof(long) on some systems (e.g. gcc-4.3.3, Linux i386),
+// and by specifying `int32_t', it would match `int' but not `long'.
 
-template<>class TFormatter<int32_t> {
- public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 12 };
-  static void format(int32_t v, char *buf);
-};
+// TODO(pts): Use a template instead of a macro.
+#define DEFINE_FORMATTER_SIGNED(type) \
+    template<>struct TFormatter<signed type> { \
+      typedef void *tag_type; \
+      enum max_type { max_buf_size = 1 + (sizeof(type) <= 4 ? 11 : 20) }; \
+      static inline void format(signed type v, char *buf) { \
+        if (sizeof(v) <= 4) { \
+          format_i32(v, buf); \
+        } else { \
+          format_i64(v, buf); \
+        } \
+      } \
+    };
 
-template<>class TFormatter<uint32_t> {
- public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 11 };
-  static void format(uint32_t v, char *buf);
-};
+#define DEFINE_FORMATTER_UNSIGNED(type) \
+    template<>struct TFormatter<unsigned type> { \
+      typedef void *tag_type; \
+      enum max_type { max_buf_size = sizeof(type) <= 4 ? 11 : 20 }; \
+      static inline void format(unsigned type v, char *buf) { \
+        if (sizeof(v) <= 4) { \
+          format_u32(v, buf); \
+        } else { \
+          format_u64(v, buf); \
+        } \
+      } \
+    };
 
-template<>class TFormatter<int16_t> {
- public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 7 };
-  static inline void format(int16_t v, char *buf) {
-    TFormatter<int32_t>::format(v, buf);  // Implicit cast.
-  }
-};
+#define DEFINE_FORMATTER_INTEGRAL(type) \
+    DEFINE_FORMATTER_SIGNED(type) \
+    DEFINE_FORMATTER_UNSIGNED(type)
 
-template<>class TFormatter<uint16_t> {
- public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 6 };
-  static inline void format(uint16_t v, char *buf) {
-    TFormatter<uint32_t>::format(v, buf);  // Implicit cast.
-  }
-};
-
-template<>class TFormatter<int64_t> {
- public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 21 };
-  static void format(int64_t v, char *buf);
-};
-
-template<>class TFormatter<uint64_t> {
- public:
-  typedef void *tag_type;
-  enum max_type { max_buf_size = 20 };
-  static void format(uint64_t v, char *buf);
-};
+DEFINE_FORMATTER_INTEGRAL(short)
+DEFINE_FORMATTER_INTEGRAL(int)
+DEFINE_FORMATTER_INTEGRAL(long)
+DEFINE_FORMATTER_INTEGRAL(long long)
 
 // TODO(pts): Implement write_hex somewhere else.
 

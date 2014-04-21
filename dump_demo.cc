@@ -1,6 +1,43 @@
+#include <stdint.h>
+
 #include "r_dump.h"
 
+#define DUMP(type) dump(#type, (type)(0))
+
+class C {};
+
 int main() {
+  DUMP(bool);
+
+  DUMP(char);
+  DUMP(unsigned char);
+  DUMP(signed char);
+  DUMP(short);
+  DUMP(unsigned short);
+  DUMP(int);
+  DUMP(unsigned int);
+  DUMP(long);
+  DUMP(unsigned long);
+  DUMP(long long);
+  DUMP(unsigned long long);
+  DUMP(int8_t);
+  DUMP(uint8_t);
+  DUMP(int16_t);
+  DUMP(uint16_t);
+  DUMP(int32_t);
+  DUMP(uint32_t);
+  DUMP(int64_t);
+  DUMP(uint64_t);
+
+  DUMP(float);
+  DUMP(double);
+  DUMP(long double);
+
+  // TODO(pts): Undefined reference to sout with g++ -O0.
+  sout << "---\n";
+
+  // dump(C());  // This won't compile. 
+
   char const *msg = "Bye";
   int a[3] = {55, 66, 77};
   std::vector<int> b;

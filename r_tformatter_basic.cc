@@ -3,8 +3,7 @@
 
 #include <stdio.h>
 
-// Prepending `template<>' would prevent this from compiling.
-void TFormatter<int32_t>::format(int32_t v, char *buf) {
+void format_i32(int32_t v, char *buf) {
   // Formats in decimal.
   char *p = buf, *q, c;
   if (v < 0) {
@@ -21,7 +20,7 @@ void TFormatter<int32_t>::format(int32_t v, char *buf) {
   }
 }
 
-void TFormatter<uint32_t>::format(uint32_t v, char *buf) {
+void format_u32(uint32_t v, char *buf) {
   // Formats in decimal.
   char *p = buf, *q, c;
   q = p;
@@ -34,7 +33,7 @@ void TFormatter<uint32_t>::format(uint32_t v, char *buf) {
   }
 }
 
-void TFormatter<int64_t>::format(int64_t v, char *buf) {
+void format_i64(int64_t v, char *buf) {
   // Formats in decimal.
   if (static_cast<uint64_t>(v) >> 32 == 0) {  // Shortcut.
     return TFormatter<int32_t>::format(v, buf);
@@ -55,7 +54,7 @@ void TFormatter<int64_t>::format(int64_t v, char *buf) {
   }
 }
 
-void TFormatter<uint64_t>::format(uint64_t v, char *buf) {
+void format_u64(uint64_t v, char *buf) {
   // Formats in decimal.
   if (static_cast<uint64_t>(v) >> 32 == 0) {  // Shortcut.
     return TFormatter<int32_t>::format(v, buf);
