@@ -3,16 +3,12 @@
 
 #include <string>
 
+#include "r_endl.h"
 #include "r_strpiece.h"
 #include "r_tformatter.h"
 #include "r_txchar.h"
 #include "r_twritable.h"
 #include "r_typetuple.h"
-
-// Example: sout << "Hi" << endl.
-// Example: sin >> endl.
-// TODO(pts): Make it also work as `stdin >> endl'.
-static const char endl = '\n';
 
 // Helper function for shiftout concatenation, e.g. `cat() << "answer=" << 42'
 // or `cat("answer=") << 42'. Please don't call cat with an actual `string&' or

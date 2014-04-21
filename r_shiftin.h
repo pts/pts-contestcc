@@ -2,7 +2,7 @@
 // TODO(pts): Implement write_hex etc.
 // TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
 // TODO(pts): Move literal, dec etc. to a namespace.
-// TODO(pts): Add line(&str);
+// TODO(pts): Add line(&str) for readline.
 
 #ifndef R_SHIFTIN_H
 #define R_SHIFTIN_H 1
@@ -11,6 +11,7 @@
 #error This is a C++ header.
 #endif
 
+#include "r_endl.h"
 #include "r_filewrapper.h"
 #include "r_sinouterr.h"
 #include "r_status.h"

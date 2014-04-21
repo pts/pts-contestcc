@@ -9,6 +9,7 @@ int main() {
   if (0) sin >> dec(&x8) >> "\n";
   if (0) sout >> dec(&x8) >> "\n";
   if (0) FileObj(sout) >> '\n';
+  if (0) sin >> endl;
   sout << true;
   fflush(sout);
   sout << "Hello, " << -42 << "," << 123e200 << "," << 1.23f << "!\n" << flush;
