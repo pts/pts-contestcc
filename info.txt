@@ -1,3 +1,5 @@
+-lr is works with g++-4.4 or later and clang++-3.0 or later.
+
 Advantage of C++ in programming contests:
 
 * compiled code runs very quickly (even faster than Java, Haskell and V8
