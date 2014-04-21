@@ -15,7 +15,7 @@
 template<>class TFormatter<bool> {
  public:
   typedef void *tag_type;
-  enum max_type { max_buf_size = 5 };  // Including the trailing \0.
+  enum max_type { max_buf_size = 6 };  // Including the trailing \0.
   static inline void format(bool v, char *buf) {
     strcpy(buf, v ? "true" : "false");
   }
