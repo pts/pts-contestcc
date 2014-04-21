@@ -12,6 +12,7 @@
 #include <set>
 #include <stack>
 #include <string>
+#include <utility>
 #include <vector>
 // TODO(pts): Can we provide wrdump(..., const std::set<T> &a) only if
 // std::set is already available (e.g. after `#include <set>')?
@@ -110,8 +111,17 @@ template<class T>struct TDumper<std::stack<T> > {
   }
 };
 
-// !! TODO(pts): pair
-// !! TODO(pts): tuple
+template<class T1, class T2>struct TDumper<std::pair<T1, T2> > {
+  typedef void *tag_type;
+  // Dumps in push order.
+  static inline void dump(const std::pair<T1, T2> &v, std::string *out) {
+    out->push_back('{');
+    wrdump(v.first, out);
+    out->append(", ");
+    wrdump(v.second, out);
+    out->push_back('}');
+  }
+};
 
 // !! TODO(pts): map
 // !! TODO(pts): multimap
@@ -143,6 +153,7 @@ template<class T>struct TDumper<std::forward_list<T> > {
 // TODO(pts): Dump unordered_multiset.
 // TODO(pts): Dump unordered_map.
 // TODO(pts): Dump unordered_multimap.
+// TODO(pts): Dump tuple (complicated because variadic).
 
 #endif
 

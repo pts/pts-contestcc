@@ -61,6 +61,7 @@ int main() {
   dump(std::list<int>());
   dump(std::set<int>());
   dump(std::multiset<int>());
+  dump(std::make_pair(55, 77.0));
   std::queue<double> q;
   q.push(55);
   q.push(-66);
