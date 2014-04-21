@@ -61,6 +61,21 @@ int main() {
   dump(std::list<int>());
   dump(std::set<int>());
   dump(std::multiset<int>());
+  std::queue<double> q;
+  q.push(55);
+  q.push(-66);
+  q.push(77);
+  dump(q);
+  std::priority_queue<float> pq;
+  pq.push(55);
+  pq.push(-66);
+  pq.push(77);
+  dump(pq);
+  std::stack<double> st;
+  st.push(55);
+  st.push(-66);
+  st.push(77);
+  dump(st);
 
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
   sout << "--- C++11:\n";
