@@ -89,6 +89,8 @@ void TFormatter<double>::format(double v, char *buf) {
       strcpy(buf, tmp);
     }
   }
+  // Make sure it looks differently from an integral type.
+  if (!strchr(buf, '.') && !strchr(buf, 'e')) strcat(buf, ".");
 }
 
 void TFormatter<float>::format(float v, char *buf) {
@@ -113,6 +115,7 @@ void TFormatter<float>::format(float v, char *buf) {
       }
     }
   }
+  if (!strchr(buf, '.') && !strchr(buf, 'e')) strcat(buf, ".");
 }
 
 #ifdef LDBL_GOOD
@@ -138,5 +141,6 @@ void TFormatter<long double>::format(long double v, char *buf) {
       strcpy(buf, tmp);
     }
   }
+  if (!strchr(buf, '.') && !strchr(buf, 'e')) strcat(buf, ".");
 }
 #endif
