@@ -125,8 +125,47 @@ template<class T1, class T2>struct TDumper<std::pair<T1, T2> > {
   }
 };
 
-// !! TODO(pts): map
-// !! TODO(pts): multimap
+template<class K, class V>struct TDumper<std::map<K, V> > {
+  typedef void *tag_type;
+  // Dumps in push order.
+  static inline void dump(const std::map<K, V> &v, std::string *out) {
+    out->push_back('{');
+    const typename std::map<K, V>::const_iterator end = v.end();
+    bool do_comma = false;
+    for (typename std::map<K, V>::const_iterator it = v.begin();
+         it != end; ++it) {
+      if (do_comma) out->append(", ", 2);
+      out->push_back('{');
+      wrdump(it->first, out);
+      out->append(", ", 2);
+      wrdump(it->second, out);
+      out->push_back('}');
+      do_comma = true;
+    }
+    out->push_back('}');
+  }
+};
+
+template<class K, class V>struct TDumper<std::multimap<K, V> > {
+  typedef void *tag_type;
+  // Dumps in push order.
+  static inline void dump(const std::multimap<K, V> &v, std::string *out) {
+    out->push_back('{');
+    const typename std::multimap<K, V>::const_iterator end = v.end();
+    bool do_comma = false;
+    for (typename std::multimap<K, V>::const_iterator it = v.begin();
+         it != end; ++it) {
+      if (do_comma) out->append(", ", 2);
+      out->push_back('{');
+      wrdump(it->first, out);
+      out->append(", ", 2);
+      wrdump(it->second, out);
+      out->push_back('}');
+      do_comma = true;
+    }
+    out->push_back('}');
+  }
+};
 
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
 

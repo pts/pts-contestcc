@@ -77,6 +77,14 @@ int main() {
   st.push(-66);
   st.push(77);
   dump(st);
+  std::map<std::string, int> m;
+  m["answer"] = 42;
+  m["other"] = 137;
+  dump(m);
+  std::multimap<double, const char*> mm;
+  mm.insert(std::make_pair(12.34, "hello"));
+  mm.insert(std::make_pair(12.34, "world"));
+  dump(mm);
 
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
   sout << "--- C++11:\n";
