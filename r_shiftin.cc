@@ -1,5 +1,7 @@
 #include "r_shiftin.h"
 
+#include <string>
+
 Status read_word(FILE *f, std::string *out) {
   int c;
   while (is_whitespace(c = getc(f))) {}
@@ -88,3 +90,18 @@ Status peek_eof(FILE *f) {
   return true;
 }
 
+Status read_line(FILE *f, std::string *line) {
+  line->clear();
+  int c;
+  while ((c = getc(f)) >= 0) {
+    line->push_back(c);
+    if (c == '\n') {
+      // Not by default. TODO(pts): Add another reader.
+      //if (!line->empty() && (*line)[line->size() - 1] == '\r') {
+      //  line->resize(line->size() - 1);
+      //}
+      break;
+    }
+  }
+  return true;
+}

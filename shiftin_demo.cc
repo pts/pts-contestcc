@@ -2,7 +2,10 @@
 #include "r_shiftout.h"
 
 int main() {
-  sout << "Hi!" << endl;
+  sout << "Hi, what's your name?" << endl;
+  std::string sline;
+  stdin >> line(&sline);
+  sout << "You wrote: " << sline;
   static const char kSlash[] = "/";
   int8_t x8;
   if (1) sin >> kSlash >> dec(&x8);

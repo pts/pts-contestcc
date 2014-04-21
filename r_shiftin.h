@@ -1,8 +1,8 @@
+// TODO(pts): Add reading floating point types.
 // TODO(pts): Add reading bool (can't ungetc fully).
 // TODO(pts): Implement write_hex etc.
 // TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
 // TODO(pts): Move literal, dec etc. to a namespace.
-// TODO(pts): Add line(&str) for readline.
 
 #ifndef R_SHIFTIN_H
 #define R_SHIFTIN_H 1
@@ -101,19 +101,40 @@ class DecInI16 {
 };
 
 static inline const FileWrapper &operator>>(
-    const FileWrapper &f, const DecInI8 &out) {
-  read_dec(f.f, out.get());
+    const FileWrapper &f, const DecInI8 &in) {
+  read_dec(f.f, in.get());
   return f;
 }
 static inline const FileWrapper &operator>>(
-    const FileWrapper &f, const DecInI16 &out) {
-  read_dec(f.f, out.get());
+    const FileWrapper &f, const DecInI16 &in) {
+  read_dec(f.f, in.get());
   return f;
 }
 
 // SUXX: These need a valid copy-constructor even if they don't copy.
 static inline DecInI8  dec(int8_t  *p) { return DecInI8(p); }
 static inline DecInI16 dec(int16_t *p) { return DecInI16(p); }
+
+Status read_line(FILE *f, std::string *line);
+
+class LineIn {
+ public:
+  inline LineIn(std::string *line): line_(line) {}
+  inline Status read(FILE *f) const {
+    return read_line(f, line_);
+  }
+ private:
+  std::string * const line_;
+};
+
+static inline LineIn line(std::string *line) { return line; }
+
+// TODO(pts): Why segfault if we remove this? It shouldn't compile.
+static inline const FileWrapper &operator>>(const FileWrapper &f,
+                                            const LineIn &in) {
+  in.read(f.f);
+  return f;
+}
 
 Status read_literal(FILE *f, const char *msg, uintptr_t size);
 
