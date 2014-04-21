@@ -117,27 +117,15 @@ void wrdump(const T (&v)[N], std::string *out) {
   wrdump_ary(v, N, out);
 }
 
-// r_dump_stl.h defines instances of TDumpDataSize.
-template<class T>class TDumpDataSize {};
+// r_dump_stl.h defines instances of TDumper.
+template<class T>class TDumper {};
 template<class T>static inline void wrdump(
     const T &v,
-    typename TypePair<std::string*, typename TDumpDataSize<T>::tag_type>
+    typename TypePair<std::string*, typename TDumper<T>::tag_type>
         ::first_type out) {
-  wrdump_ary(v.data(), v.size(), out);
+  TDumper<T>::dump(v, out);
 }
 
-// r_dump_stl.h defines instances of TDumpBeginEnd.
-template<class T>class TDumpBeginEnd {};
-template<class T>static inline void wrdump(
-    const T &v,
-    typename TypePair<std::string*, typename TDumpBeginEnd<T>::tag_type>
-        ::first_type out) {
-  // v.begin() and v.end() are pointers.
-  wrdump_ary(v.begin(), v.end() - v.begin(), out);
-}
-
-// r_dump_stl.h defines instances of TDumpForward.
-template<class T>class TDumpForward {};
 template<class T>static inline
 void wrdump_forward(const T &v, std::string *out) {
   out->push_back('{');
@@ -149,12 +137,6 @@ void wrdump_forward(const T &v, std::string *out) {
     do_comma = true;
   }
   out->push_back('}');
-}
-template<class T>static inline void wrdump(
-    const T &v,
-    typename TypePair<std::string*, typename TDumpForward<T>::tag_type>
-        ::first_type out) {
-  wrdump_forward(v, out);
 }
 
 template<class T>void dump_buffnl(FILE *f, const T &t) {
