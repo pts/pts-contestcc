@@ -4,7 +4,7 @@
 #include "r_dump_stl.h"
 
 // TODO(pts): Add a separator.
-#define DUMP(type) dump(#type, (type)(0))
+#define DUMP(type) dump(#type ": ", (type)(0))
 
 class C {};
 
