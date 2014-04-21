@@ -18,9 +18,8 @@
 
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
 #include <array>
-#include <forward_list>
 #include <initializer_list>
-#if 1  // TODO(pts): Disable this with libsdc++-4.4.3 and Clang, compile error.
+#ifndef __clang__  // TODO(pts): Disable this with libsdc++-4.4.3 and Clang, compile error.
 #include <unordered_map>
 #include <unordered_set>
 #endif
@@ -58,9 +57,11 @@ template<class T, std::size_t N>struct TDumpDataSize<std::array<T, N> > {
 template<class T>struct TDumpBeginEnd<std::initializer_list<T> > {
   typedef void *tag_type;
 };
+#ifndef __clang__
 template<class T>struct TDumpForward<std::forward_list<T> > {
   typedef void *tag_type;
 };
+#endif
 
 // !! TODO(pts): unordered_set (C++11)
 // !! TODO(pts): unordered_multiset (C++11)

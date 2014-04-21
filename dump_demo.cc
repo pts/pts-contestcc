@@ -60,7 +60,9 @@ int main() {
   // To avoid warning here: g++ -std=c++0x -fno-deduce-init-list
   dump(std::initializer_list<int>({8, 9, 10}));
   // dump({8, 9, 10});  // This doesn't compile, can't infer type int.
+#ifndef __clang__
   dump(std::forward_list<int>({8, 9, 10}));
+#endif
 #endif
 
   dump("Answer: ", 42);
