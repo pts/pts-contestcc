@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include "r_str_piece.h"
+#include "r_strpiece.h"
 #include "r_tformatter.h"
 
 template<>class TFormatter<bool> {
