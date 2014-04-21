@@ -59,8 +59,6 @@ int main() {
   dump(a);
   dump(b);
   dump(std::list<int>());
-  dump(std::set<int>());
-  dump(std::multiset<int>());
   dump(std::make_pair(55, 77.0));
   std::queue<double> q;
   q.push(55);
@@ -85,6 +83,18 @@ int main() {
   mm.insert(std::make_pair(12.34, "hello"));
   mm.insert(std::make_pair(12.34, "world"));
   dump(mm);
+  std::set<double> s;
+  s.insert(66);
+  s.insert(55);
+  s.insert(-44);
+  s.insert(55);
+  dump(s);
+  std::multiset<double> ms;
+  ms.insert(66);
+  ms.insert(55);
+  ms.insert(-44);
+  ms.insert(55);
+  dump(ms);
 
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
   sout << "--- C++11:\n";
@@ -93,6 +103,26 @@ int main() {
   // To avoid warning here: g++ -std=c++0x -fno-deduce-init-list
   dump(std::initializer_list<int>({8, 9, 10}));
   // dump({8, 9, 10});  // This doesn't compile, can't infer type int.
+  std::unordered_map<std::string, int> um;
+  um["answer"] = 42;
+  um["other"] = 137;
+  dump(um);
+  std::unordered_multimap<double, const char*> umm;
+  umm.insert(std::make_pair(12.34, "hello"));
+  umm.insert(std::make_pair(12.34, "world"));
+  dump(umm);
+  std::unordered_set<double> us;
+  us.insert(66);
+  us.insert(55);
+  us.insert(-44);
+  us.insert(55);
+  dump(us);
+  std::unordered_multiset<double> ums;
+  ums.insert(66);
+  ums.insert(55);
+  ums.insert(-44);
+  ums.insert(55);
+  dump(ums);
 #ifndef __clang__
   dump(std::forward_list<int>({8, 9, 10}));
 #endif
@@ -102,17 +132,18 @@ int main() {
   dump("Foo: ", 7, 6, 5);
 
   // TODO(pts): stdout << dump(42) << "\n";
-  std::string s; s << dump(42) << dump(-5) << '.';
+  std::string str; str << dump(42) << dump(-5) << '.';
   // s << Formatter<const char*>(";.");  // Works.
   // s << Formatter(";.");  // Doesn't compile.
-  s << ";." << "x" << msg << -42 << msg;
+  str << ";." << "x" << msg << -42 << msg;
   // s << 12.34;
-  printf("<%s>\n", s.c_str());
+  printf("<%s>\n", str.c_str());
   // Unfortunately, `stdout << "HI"' will never compile, because both sides
   // of `<<` are basic types, so `operator<<' declarations are not
   // considered.
   FileObj(stdout) << "HI:" << dump(42) << dump(-6);
-  stdout << dump(-7) << " " << dump(89) << dump('\'') << dump('\t') << ' ' << dump('\376') << dump('x');
+  stdout << dump(-7) << " " << dump(89) << dump('\'') << dump('\t') << ' '
+         << dump('\376') << dump('x');
   printf("\n");
 
   return 0;

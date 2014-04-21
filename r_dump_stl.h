@@ -30,6 +30,22 @@
 
 #include "r_dump.h"
 
+template<class T>static inline void wrdump_map(const T &v, std::string *out) {
+  out->push_back('{');
+  const typename T::const_iterator end = v.end();
+  bool do_comma = false;
+  for (typename T::const_iterator it = v.begin(); it != end; ++it) {
+    if (do_comma) out->append(", ", 2);
+    out->push_back('{');
+    wrdump(it->first, out);
+    out->append(", ", 2);
+    wrdump(it->second, out);
+    out->push_back('}');
+    do_comma = true;
+  }
+  out->push_back('}');
+}
+
 template<class T>struct TDumper<std::vector<T> > {
   typedef void *tag_type;
   static inline void dump(const std::vector<T> &v, std::string *out) {
@@ -127,43 +143,15 @@ template<class T1, class T2>struct TDumper<std::pair<T1, T2> > {
 
 template<class K, class V>struct TDumper<std::map<K, V> > {
   typedef void *tag_type;
-  // Dumps in push order.
   static inline void dump(const std::map<K, V> &v, std::string *out) {
-    out->push_back('{');
-    const typename std::map<K, V>::const_iterator end = v.end();
-    bool do_comma = false;
-    for (typename std::map<K, V>::const_iterator it = v.begin();
-         it != end; ++it) {
-      if (do_comma) out->append(", ", 2);
-      out->push_back('{');
-      wrdump(it->first, out);
-      out->append(", ", 2);
-      wrdump(it->second, out);
-      out->push_back('}');
-      do_comma = true;
-    }
-    out->push_back('}');
+    wrdump_map(v, out);
   }
 };
 
 template<class K, class V>struct TDumper<std::multimap<K, V> > {
   typedef void *tag_type;
-  // Dumps in push order.
   static inline void dump(const std::multimap<K, V> &v, std::string *out) {
-    out->push_back('{');
-    const typename std::multimap<K, V>::const_iterator end = v.end();
-    bool do_comma = false;
-    for (typename std::multimap<K, V>::const_iterator it = v.begin();
-         it != end; ++it) {
-      if (do_comma) out->append(", ", 2);
-      out->push_back('{');
-      wrdump(it->first, out);
-      out->append(", ", 2);
-      wrdump(it->second, out);
-      out->push_back('}');
-      do_comma = true;
-    }
-    out->push_back('}');
+    wrdump_map(v, out);
   }
 };
 
@@ -218,10 +206,39 @@ template<class... Types>struct TDumper<std::tuple<Types...> > {
   }
 };
 
-// TODO(pts): Dump unordered_set.
-// TODO(pts): Dump unordered_multiset.
-// TODO(pts): Dump unordered_map.
-// TODO(pts): Dump unordered_multimap.
+template<class K, class V>struct TDumper<std::unordered_map<K, V> > {
+  typedef void *tag_type;
+  static inline void dump(const std::unordered_map<K, V> &v, std::string *out) {
+    // TODO(pts): Dump in sorted order if there is `operator<' for K.
+    wrdump_map(v, out);
+  }
+};
+
+template<class K, class V>struct TDumper<std::unordered_multimap<K, V> > {
+  typedef void *tag_type;
+  static inline void dump(const std::unordered_multimap<K, V> &v,
+                          std::string *out) {
+    // TODO(pts): Dump in sorted order if there is `operator<' for K.
+    wrdump_map(v, out);
+  }
+};
+
+template<class T>struct TDumper<std::unordered_set<T> > {
+  typedef void *tag_type;
+  static inline void dump(const std::unordered_set<T> &v, std::string *out) {
+    // TODO(pts): Dump in sorted order if there is `operator<' for K.
+    wrdump_forward(v, out);
+  }
+};
+
+template<class T>struct TDumper<std::unordered_multiset<T> > {
+  typedef void *tag_type;
+  static inline void dump(const std::unordered_multiset<T> &v,
+                          std::string *out) {
+    // TODO(pts): Dump in sorted order if there is `operator<' for K.
+    wrdump_forward(v, out);
+  }
+};
 
 #endif  // C++0x and C++11
 

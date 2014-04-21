@@ -212,6 +212,8 @@ template<class T1, class T2, class T3, class T4>void dump(const StrMsg &msg, con
 // too much code bloat to the generated binary.
 
 // TODO(pts): Document this function more, it's user-visible.
+// TODO(pts): Add proper SFINAE and also to the 1-arg StrMsg for early discovery
+// of unimplemented dumpers. (Can't discover recursively.)
 template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
 
 #endif  // R_DUMP_H
