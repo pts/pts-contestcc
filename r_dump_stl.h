@@ -20,6 +20,7 @@
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
 #include <array>
 #include <initializer_list>
+#include <tuple>
 #ifndef __clang__  // TODO(pts): Disable this with libsdc++-4.4.3 and Clang, compile error.
 #include <forward_list>
 #include <unordered_map>
@@ -111,6 +112,7 @@ template<class T>struct TDumper<std::stack<T> > {
   }
 };
 
+// TODO(pts): Make this work in xstatic clang 3.3.
 template<class T1, class T2>struct TDumper<std::pair<T1, T2> > {
   typedef void *tag_type;
   // Dumps in push order.
@@ -149,12 +151,39 @@ template<class T>struct TDumper<std::forward_list<T> > {
 };
 #endif
 
+// TuplePrinter is based on http://stackoverflow.com/a/17473007/97248
+
+template<typename Type, unsigned N, unsigned Last>
+struct TuplePrinter {
+  static void print(std::string *out, const Type& value) {
+    wrdump(std::get<N>(value), out);
+    out->append(", ");
+    TuplePrinter<Type, N + 1, Last>::print(out, value);
+  }
+};
+
+template<typename Type, unsigned N>
+struct TuplePrinter<Type, N, N> {
+  static void print(std::string *out, const Type& value) {
+    wrdump(std::get<N>(value), out);
+  }
+};
+
+template<class... Types>struct TDumper<std::tuple<Types...> > {
+  typedef void *tag_type;
+  // Dumps in push order.
+  static inline void dump(const std::tuple<Types...> &v, std::string *out) {
+    out->push_back('{');
+    TuplePrinter<std::tuple<Types...>, 0, sizeof...(Types) - 1>::print(out, v);
+    out->push_back('}');
+  }
+};
+
 // TODO(pts): Dump unordered_set.
 // TODO(pts): Dump unordered_multiset.
 // TODO(pts): Dump unordered_map.
 // TODO(pts): Dump unordered_multimap.
-// TODO(pts): Dump tuple (complicated because variadic).
 
-#endif
+#endif  // C++0x and C++11
 
 #endif  // R_DUMP_STL_H

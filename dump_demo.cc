@@ -80,6 +80,7 @@ int main() {
 
 #if __GXX_EXPERIMENTAL_CXX0X__ || __cplusplus >= 201100
   sout << "--- C++11:\n";
+  dump(std::make_tuple(55, 77.0, "hi"));
   dump(std::array<double, 3>());
   // To avoid warning here: g++ -std=c++0x -fno-deduce-init-list
   dump(std::initializer_list<int>({8, 9, 10}));
