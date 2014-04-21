@@ -1,3 +1,9 @@
+// Defines the dump(...) function, for dumping basic types and data structures.
+// Mostly for debugging purposes.
+//
+// To dump STL containers, please also `#include "r_dump_stl.h"'. That has a
+// side effect of `#include <vector>' etc.
+
 #ifndef R_DUMP_H
 #define R_DUMP_H 1
 
@@ -6,6 +12,7 @@
 #endif
 
 #include "r_shiftout.h"
+#include "r_strpiece.h"
 #include "r_tformatter_basic.h"
 
 #include <string>
@@ -20,8 +27,6 @@
 // We don't care too much about performane (hence no `static inline' for
 // functions etc.), because dumping is for debugging.
 
-// TODO(pts): !! Add dumping of std::string.
-
 // Making wrdump a template even for non-parametric types such as signed char
 // and string, so that g++ won't report the list of overloaded non-template
 // functions.
@@ -31,6 +36,7 @@
 
 template<class T>class TDumpCustom {};
 template<>struct TDumpCustom<char> { typedef void *tag_type; };
+template<>struct TDumpCustom<const char*> { typedef void *tag_type; };
 template<class T>static inline void wrdump(
     T v,
     typename TypePair<std::string*, typename TDumpCustom<T>::tag_type>
@@ -38,13 +44,23 @@ template<class T>static inline void wrdump(
   wrdump_low(v, out);
 }
 
+template<class T>class TDumpCustomRefNul {};
+template<>struct TDumpCustomRefNul<std::string> { typedef void *tag_type; };
+template<>struct TDumpCustomRefNul<StrPiece>    { typedef void *tag_type; };
+template<class T>static inline void wrdump(
+    const T &v,
+    typename TypePair<std::string*, typename TDumpCustomRefNul<T>::tag_type>
+        ::first_type out) {
+  wrdump_low(v, out);
+}
+
 // `char', `signed char' and `unsigned char' are distinct types.
-template<class T>class TDump8 {};
-template<>struct TDump8<signed char>   { typedef void *tag_type; };
-template<>struct TDump8<unsigned char> { typedef void *tag_type; };
+template<class T>class TDumpChar {};
+template<>struct TDumpChar<signed char>   { typedef void *tag_type; };
+template<>struct TDumpChar<unsigned char> { typedef void *tag_type; };
 template<class T>static inline void wrdump(
     T v,
-    typename TypePair<std::string*, typename TDump8<T>::tag_type>
+    typename TypePair<std::string*, typename TDumpChar<T>::tag_type>
         ::first_type out) {
   char buf[TFormatter<int>::max_buf_size];
   TFormatter<int>::format(v, buf);
@@ -77,7 +93,7 @@ template<class T>static inline void wrdump(
   out->append(buf);
 }
 
-template<class T>void wrdump(const T *a, uintptr_t size, std::string *out) {
+template<class T>void wrdump_ary(const T *a, uintptr_t size, std::string *out) {
   out->push_back('{');
   if (size != 0) {
     wrdump(a[0], out);
@@ -89,9 +105,16 @@ template<class T>void wrdump(const T *a, uintptr_t size, std::string *out) {
   out->push_back('}');
 }
 
-template<class T, uintptr_t S>static inline
-void wrdump(const T (&v)[S], std::string *out) {
-  wrdump(v, S, out);
+void wrdump_low(const char *v, uintptr_t size, std::string *out);
+
+template<uintptr_t N>static inline
+void wrdump(const char (&v)[N], std::string *out) {
+  wrdump_low(v, N, out);
+}
+
+template<class T, uintptr_t N>static inline
+void wrdump(const T (&v)[N], std::string *out) {
+  wrdump_ary(v, N, out);
 }
 
 // r_dump_stl.h defines instances of TDumpDataSize.
@@ -100,7 +123,7 @@ template<class T>static inline void wrdump(
     const T &v,
     typename TypePair<std::string*, typename TDumpDataSize<T>::tag_type>
         ::first_type out) {
-  wrdump(v.data(), v.size(), out);
+  wrdump_ary(v.data(), v.size(), out);
 }
 
 // r_dump_stl.h defines instances of TDumpBeginEnd.
@@ -110,7 +133,7 @@ template<class T>static inline void wrdump(
     typename TypePair<std::string*, typename TDumpBeginEnd<T>::tag_type>
         ::first_type out) {
   // v.begin() and v.end() are pointers.
-  wrdump(v.begin(), v.end() - v.begin(), out);
+  wrdump_ary(v.begin(), v.end() - v.begin(), out);
 }
 
 // r_dump_stl.h defines instances of TDumpForward.
@@ -192,7 +215,7 @@ template<class T1, class T2, class T3>void dump(const StrMsg &msg, const T1 &t1,
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
 template<class T1, class T2, class T3, class T4>void dump(const StrMsg &msg, const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4) {
-  std::string out(msg.data(), msg.size);
+  std::string out(msg.data, msg.size);
   wrdump(t1, &out);
   out.append(", ");
   wrdump(t2, &out);

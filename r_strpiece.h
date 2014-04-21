@@ -6,8 +6,10 @@
 #endif
 
 #include <stdint.h>
+#include <string.h>
 
 struct StrPiece {
+  inline StrPiece(const char *data): data(data), size(strlen(data)) {}
   inline StrPiece(const char *data, uintptr_t size)
       : data(data), size(size) {}
   const char *data;

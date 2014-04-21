@@ -72,6 +72,9 @@ DEFINE_FORMATTER_INTEGRAL(int)
 DEFINE_FORMATTER_INTEGRAL(long)
 DEFINE_FORMATTER_INTEGRAL(long long)
 
+// TODO(pts): Add: template<class T>std::string itoa(T) { ... }
+// ... also for `signed char', `char' etc.
+
 // TODO(pts): Implement write_hex somewhere else.
 
 // --- Floating point types.

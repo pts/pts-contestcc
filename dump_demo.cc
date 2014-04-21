@@ -6,6 +6,7 @@
 // TODO(pts): Add a separator.
 #define DUMP(type) dump(#type ": ", (type)(0))
 
+// TODO(pts): Add a custom class which is actually dumpable.
 class C {};
 
 int main() {
@@ -35,8 +36,15 @@ int main() {
   DUMP(double);
   DUMP(long double);
 
-  // TODO(pts): Undefined reference to sout with g++ -O0.
   sout << "---\n";
+  dump("Hel\3456l\234o!\0not-truncated");
+  dump((const char*)"Hel\345lo!\0truncated");  // "Hello\345!".
+  dump(std::string("Hello!\n"));
+  dump(std::string("Hel\0lo!\n", 8));
+  dump(StrPiece("Hel\0lo!\n", 8));
+  dump(StrPiece("Hello!\n", 7));
+  char ca[] = {33, 44, 00, 55};  // No \0 at end.
+  dump(ca);
 
   // dump(C());  // This won't compile, missing wrdump for C.
 
