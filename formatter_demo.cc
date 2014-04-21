@@ -63,6 +63,7 @@ int main() {
   s << 34.56 << '+' << 34.56f;
   s << '+' << cr;  // No copy of C.
   s << D();
+  s << (cat() << "x" << false);
   printf("</C>\n");
   s << "Foo" << std::string("Bar");
   {

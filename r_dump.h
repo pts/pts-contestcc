@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #include "r_dump_basic.h"
+#include "r_strmsg.h"
 #include "r_typetuple.h"
 
 // We don't care too much about performane (hence no `static inline' for
@@ -165,23 +166,23 @@ template<class T>class Dumper {
   const T &t_;
 };
 
-template<class T>void dump(const char *msg, const T &t) {
-  std::string out(msg);
+template<class T>void dump(const StrMsg &msg, const T &t) {
+  std::string out(msg.data, msg.size);
   // Buffering to a string to reduce stderr autoflush problems.
   wrdump(t, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
-template<class T1, class T2>void dump(const char *msg, const T1 &t1, const T2 &t2) {
-  std::string out(msg);
+template<class T1, class T2>void dump(const StrMsg &msg, const T1 &t1, const T2 &t2) {
+  std::string out(msg.data, msg.size);
   wrdump(t1, &out);
   out.append(", ");
   wrdump(t2, &out);
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
-template<class T1, class T2, class T3>void dump(const char *msg, const T1 &t1, const T2 &t2, const T3 &t3) {
-  std::string out(msg);
+template<class T1, class T2, class T3>void dump(const StrMsg &msg, const T1 &t1, const T2 &t2, const T3 &t3) {
+  std::string out(msg.data, msg.size);
   wrdump(t1, &out);
   out.append(", ");
   wrdump(t2, &out);
@@ -190,8 +191,8 @@ template<class T1, class T2, class T3>void dump(const char *msg, const T1 &t1, c
   out.push_back('\n');
   Status(fwrite(out.data(), 1, out.size(), stderr) == out.size());
 }
-template<class T1, class T2, class T3, class T4>void dump(const char *msg, const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4) {
-  std::string out(msg);
+template<class T1, class T2, class T3, class T4>void dump(const StrMsg &msg, const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4) {
+  std::string out(msg.data(), msg.size);
   wrdump(t1, &out);
   out.append(", ");
   wrdump(t2, &out);
