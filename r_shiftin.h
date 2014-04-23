@@ -56,7 +56,6 @@ Status read_dec(FILE *f, int nbytes, uint64_t *out);
 // Helper class.
 class DecReader {
  public:
-  typedef void *reader_type;
   inline explicit DecReader(FILE *f): f_(f) {}
   inline operator int8_t() {
     int64_t i64; read_dec(f_, 1, &i64); return i64;
@@ -170,6 +169,8 @@ template<>struct TIntegerReader<signed long long> {
 
 template<class T>class DecIn {
  public:
+  typedef void *read_type;
+  typedef void *reader_type;
   inline DecIn(T *p): p_(assume_notnull(p)) {}
   inline void read(FILE *f) const {
     TIntegerSizeReader<sizeof(T)>::t_read_dec(
@@ -178,12 +179,6 @@ template<class T>class DecIn {
  private:
   T *p_;
 };
-
-template<class T>static inline
-const FileWrapper &operator>>(const FileWrapper &f, const DecIn<T> &in) {
-  in.read(f.f);
-  return f;
-}
 
 template<class T>static inline
 typename TypePair<const FileWrapper&,
@@ -204,6 +199,7 @@ Status read_line(FILE *f, std::string *line);
 
 class LineIn {
  public:
+  typedef void *read_type;
   typedef void *reader_type;
   inline explicit LineIn(std::string *line): line_(line) {}
   inline Status read(FILE *f) const {
@@ -215,19 +211,11 @@ class LineIn {
 
 static inline LineIn line(std::string *line) { return LineIn(line); }
 
-// TODO(pts): Eliminate redundancy in most operator>> declarations.
-template<class T>static inline
-typename TypePair<const FileWrapper&,
-                  typename TFileWrapper<T>::tag_type>::first_type
-operator>>(const T &f, const LineIn &in) {  // T = FileWrapper.
-  in.read(f.f);
-  return f;
-}
-
 Status read_literal(FILE *f, const char *msg, uintptr_t size);
 
 class LiteralIn {
  public:
+  typedef void *read_type;
   typedef void *reader_type;
   inline LiteralIn(const char *msg, uintptr_t size): msg_(msg), size_(size) {}
   inline explicit LiteralIn(const char *msg): msg_(msg), size_(strlen(msg)) {}
@@ -236,14 +224,6 @@ class LiteralIn {
   const char * const msg_;  // Owned externally.
   const uintptr_t size_;
 };
-
-template<class T>static inline
-typename TypePair<const FileWrapper&,
-                  typename TFileWrapper<T>::tag_type>::first_type
-operator>>(const T &f, const LiteralIn &in) {  // T = FileWrapper.
-  in.read(f.f);
-  return f;
-}
 
 template<class T>static inline
 typename TypePair<const FileWrapper&,
@@ -264,20 +244,13 @@ Status read_literal(FILE *f, char expc);
 
 class LiteralCharIn {
  public:
+  typedef void *read_type;
   typedef void *reader_type;
   inline explicit LiteralCharIn(char c): c_(c) {}
   inline Status read(FILE *f) const { return read_literal(f, c_); }
  private:
   const char c_;
 };
-
-template<class T>static inline
-typename TypePair<const FileWrapper&,
-                  typename TFileWrapper<T>::tag_type>::first_type
-operator>>(const T &f, const LiteralCharIn &in) {  // T = FileWrapper.
-  in.read(f.f);
-  return f;
-}
 
 // This wouldn't work as a `char c' argument, it would be ambiguous with
 // `char &c' below.
@@ -295,20 +268,13 @@ Status read_char(FILE *f, char *p);
 
 class CharIn {
  public:
+  typedef void *read_type;
   typedef void *reader_type;
   inline explicit CharIn(char *p): p_(p) {}
   inline Status read(FILE *f) const { return read_char(f, p_); }
  private:
   char *p_;
 };
-
-template<class T>static inline
-typename TypePair<const FileWrapper&,
-                  typename TFileWrapper<T>::tag_type>::first_type
-operator>>(const T &f, const CharIn &in) {  // T = FileWrapper.
-  in.read(f.f);
-  return f;
-}
 
 template<class T>static inline
 typename TypePair<const FileWrapper&,
@@ -325,6 +291,7 @@ static inline CharIn char1(char &c) { return CharIn(&c); }
 // Check that next character is not a whitespace.
 Status peek_nows(FILE *f);
 
+// No read_type.
 class NowsIn { public: typedef void *reader_type; };
 extern NowsIn nows;
 
@@ -336,8 +303,12 @@ operator>>(const T &f, NowsIn) {  // T = FileWrapper.
   return f;
 }
 
+// ---
+
 // Check that next character is not a whitespace.
 Status peek_eof(FILE *f);
+
+// No read_type.
 class EofIn { public: typedef void *reader_type; };
 extern EofIn eof;
 
@@ -346,6 +317,16 @@ typename TypePair<const FileWrapper&,
                   typename TFileWrapper<T>::tag_type>::first_type
 operator>>(const T &f, EofIn) {  // T = FileWrapper.
   peek_eof(f.f);
+  return f;
+}
+
+// ---
+
+// Not reader_type, but read_type.
+template<class V>static inline
+typename TypePair<FileWrapper, typename V::read_type>::first_type
+operator>>(const FileWrapper &f, const V &v) {
+  v.read(f.f);
   return f;
 }
 
