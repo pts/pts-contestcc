@@ -15,7 +15,6 @@
 #endif
 
 #include "r_endl.h"
-#include "r_fileobj.h"  // TODO(pts): Make it work with forward-declarations.
 #include "r_filewrapper.h"
 #include "r_sinouterr.h"
 #include "r_status.h"
@@ -357,16 +356,24 @@ operator>>(FILE *f, const V &v) {
   return fo;
 }
 
-// Forward-declaration wouldn't work here: class FileObj;
-// TODO(pts): Make it work with forward-declaration.
-template<class V>static inline
-FileWrapper operator>>(const FileObj &f, const V &v) {
+// --- Reading from FileObj.
+
+class FileObj;  // A forward-declaration is good enough.
+template<class T>class TFileObj {};
+template<>struct TFileObj<FileObj> { typedef void *tag_type; };
+
+// We use TFileObj just to make it work with FileObj forward-declared.
+template<class T, class V>static inline
+typename TypePair<FileWrapper, typename TFileObj<T>::tag_type>::first_type
+operator>>(const T &f, const V &v) {
   FileWrapper fo(f.f());
   fo >> v;
   return fo;
 }
-template<class V>static inline
-FileWrapper operator>>(const FileObj &f, V &v) {
+
+template<class T, class V>static inline
+typename TypePair<FileWrapper, typename TFileObj<T>::tag_type>::first_type
+operator>>(const T &f, V &v) {
   FileWrapper fo(f.f());
   fo >> v;
   return fo;
