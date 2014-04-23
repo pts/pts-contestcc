@@ -1,4 +1,3 @@
-// TODO(pts): Add reading of integral types, including long.
 // TODO(pts): Add reading of floating point types.
 // TODO(pts): Add reading of bool (can't ungetc fully).
 // TODO(pts): Implement write_hex etc.
@@ -48,7 +47,7 @@ std::string read_word(FILE *f);  // With error handling.
 
 // Ignores optional whitespace in front of the number.
 //
-// TODO(pts): Implement unsigned version, implement smaller versions.
+// TODO(pts): Implement smaller versions.
 Status read_dec(FILE *f, int nbytes, int64_t *out);
 Status read_dec(FILE *f, int nbytes, uint64_t *out);
 
@@ -170,7 +169,7 @@ template<class T>class DecIn {
  public:
   typedef void *read_type;
   typedef void *reader_type;
-  inline DecIn(T *p): p_(assume_notnull(p)) {}
+  inline explicit DecIn(T *p): p_(assume_notnull(p)) {}
   inline void read(FILE *f) const {
     TIntegerSizeReader<sizeof(T)>::t_read_dec(
         f, static_cast<typename TIntegerReader<T>::int_type*>(p_));
@@ -187,12 +186,11 @@ operator>>(const FileWrapper &f, T &vr) {  // T = FileWrapper.
   return f;
 }
 
-// SUXX: These need a valid copy-constructor even if they don't copy.
-// TODO(pts): Auto-generate these.
+// DecIn etc. need a valid copy-constructor even if they don't copy.
 template<class T>static inline
 typename TypePair<DecIn<T>,
                   typename TIntegerReader<T>::int_type>::first_type
-dec(T *p) { return p; }
+dec(T *p) { return DecIn<T>(p); }
 
 Status read_line(FILE *f, std::string *line);
 

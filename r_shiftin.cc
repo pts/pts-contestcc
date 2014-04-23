@@ -47,6 +47,29 @@ Status read_dec(FILE *f, int nbytes, int64_t *out) {
   return true;
 }
 
+Status read_dec(FILE *f, int nbytes, uint64_t *out) {
+  int c;
+  while ((c = getc(f)) >= 0 && is_whitespace(c)) {}
+  if (!is_digit(c)) {
+    if (c >= 0) ungetc(c, f);
+    return "EOF when reading unsigned decimal.";
+  }
+  uint64_t n = c - '0';
+  const uint64_t limit = (uint64_t)~0 >> (64 - 8 * nbytes);
+  while (is_digit(c = getc(f))) {
+    const uint64_t n10 = 10 * n;
+    const uint64_t n10c = n10 + c - '0';
+    // TODO(pts): Use faster implementation if nbytes < sizeof(int64_t).
+    if (n10 / 10 != n || n10c < n10 || n10c > limit) {
+      return "Out of bounds when reading unsigned decimal.";
+    }
+    n = n10c;
+  }
+  if (c >= 0) ungetc(c, f);
+  *out = n;
+  return true;
+}
+
 Status read_literal(FILE *f, const char *msg, uintptr_t size) {
   for (; size > 0; ++msg, --size) {
     int c = getc(f);
