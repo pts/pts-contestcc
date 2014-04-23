@@ -1,6 +1,25 @@
 #include "r_shiftin.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <string>
+
+static inline bool is_whitespace(int c) {
+  return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+}
+
+static inline bool is_digit(int c) {
+  return c + 0U - '0' <= 9;
+}
+
+static inline bool is_alpha(int c) {
+  return (c | 32U) - 'a' <= 'z' - 'a' + 0U;
+}
+
+static inline bool is_word(int c) {
+  return is_alpha(c) || is_digit(c) || c == '_';
+}
 
 Status read_word(FILE *f, std::string *out) {
   int c;
@@ -133,5 +152,32 @@ Status read_char(FILE *f, char *p) {
   char c = getc(f);
   if (c < 0) return "EOF when reading char.";
   *p = c;
+  return true;
+}
+
+Status read_bool(FILE *f, bool *out) {
+  int c;
+  while (is_whitespace(c = getc(f))) {}
+  if (c < 0) { on_eof:
+    return "EOF when reading bool.";
+  }
+  // Accept "true" or "false".
+  char const *msg = c == 't' ? "rue" : c == 'f' ? "alse" : NULL;
+  if (!msg) { on_err:
+    ungetc(c, f);
+    return "Unexpected input when reading bool.";
+  }
+  const bool v = c == 't';
+  for (; msg[0] != '\0'; ++msg) {
+    c = getc(f);
+    // TODO(pts): Report what literal (msg0).
+    if (c < 0) goto on_eof;
+    if ((char)c != msg[0]) goto on_err;
+  }
+  if ((c = getc(f)) >= 0) {
+    ungetc(c, f);
+    if (is_word(c)) return "Unexpected word character read after bool.";
+  }
+  *out = v;
   return true;
 }

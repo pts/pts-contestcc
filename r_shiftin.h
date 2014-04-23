@@ -1,5 +1,4 @@
 // TODO(pts): Add reading of floating point types.
-// TODO(pts): Add reading of bool (can't ungetc fully).
 // TODO(pts): Implement write_hex etc.
 // TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
 // TODO(pts): Move literal, dec etc. to a namespace.
@@ -33,14 +32,6 @@
 
 // For eGlibc, math.h defines this, for uClibc, it doesn't.
 // #define NAN (__builtin_nanf (""))
-
-static inline bool is_whitespace(int c) {
-  return c == ' ' || c == '\t' || c == '\r' || c == '\n';
-}
-
-static inline bool is_digit(int c) {
-  return c - '0' + 0U <= 9;
-}
 
 Status read_word(FILE *f, std::string *out);
 std::string read_word(FILE *f);  // With error handling.
@@ -192,6 +183,8 @@ typename TypePair<DecIn<T>,
                   typename TIntegerReader<T>::int_type>::first_type
 dec(T *p) { return DecIn<T>(p); }
 
+// ---
+
 Status read_line(FILE *f, std::string *line);
 
 class LineIn {
@@ -207,6 +200,39 @@ class LineIn {
 };
 
 static inline LineIn line(std::string *line) { return LineIn(line); }
+
+// ---
+
+// Ignores optional whitespace in front of the number. Rejects the bool if
+// followed by any of [a-zA-Z0-9_].
+//
+// Can't ungetc fully on error.
+Status read_bool(FILE *f, bool *out);
+
+class BoolIn {
+ public:
+  typedef void *read_type;
+  typedef void *reader_type;
+  inline explicit BoolIn(bool *p): p_(p) {}
+  inline Status read(FILE *f) const {
+    return read_bool(f, p_);
+  }
+ private:
+  bool * const p_;
+};
+
+static inline BoolIn bool1(bool *p) { return BoolIn(p); }
+
+// TODO(pts): Eliminate redundancy in such operator>> definitions.
+template<class T>static inline
+typename TypePair<const FileWrapper&,
+                  typename TFileWrapper<T>::tag_type>::first_type
+operator>>(const T &f, bool &p) {  // T = FileWrapper.
+  BoolIn(&p).read(f.f);
+  return f;
+}
+
+// ---
 
 Status read_literal(FILE *f, const char *msg, uintptr_t size);
 

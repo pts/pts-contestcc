@@ -4,6 +4,9 @@
 int main(int argc, char **argv) {
   (void)argv;
   if (argc < 0) {
+    bool b; sin >> b >> endl;  // BoolIn.
+  }
+  if (argc < 0) {
     uint16_t u16; sin >> u16;  // DecIn.
     char c; sin >> c;  // LiteralCharIn.
     int8_t i8; sin >> i8;  // DecIn.
