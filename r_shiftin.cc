@@ -105,3 +105,10 @@ Status read_line(FILE *f, std::string *line) {
   }
   return true;
 }
+
+Status read_char(FILE *f, char *p) {
+  char c = getc(f);
+  if (c < 0) return "EOF when reading char.";
+  *p = c;
+  return true;
+}

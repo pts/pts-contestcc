@@ -11,7 +11,8 @@
 //
 // We need this class for operator<<, because FILE* is not an user-defined
 // type.
-struct FileWrapper {
+class FileWrapper {
+ public:
   inline explicit FileWrapper(FILE *f): f(f) {}
   inline operator FILE*() const { return f; }
   // Don't add more fields, so FileWrapper can be copied easily.

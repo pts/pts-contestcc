@@ -2,13 +2,19 @@
 #include "r_shiftout.h"
 
 int main() {
+  if (0) {
+    char c; sin >> c;  // LiteralCharIn.
+    int8_t i8; sin >> i8;  // DecIn.
+    int16_t i16; sin >> i16;  // DecIn.
+    return 0;
+  }
   sout << "Hi, what's your name?" << endl;
   std::string sline;
   stdin >> line(&sline);
   sout << "You wrote: " << sline;
   static const char kSlash[] = "/";
   int8_t x8;
-  if (1) sin >> kSlash >> dec(&x8);
+  if (1) sin >> kSlash >> x8;
   if (0) sin >> dec(&x8) >> "\n";
   if (0) sout >> dec(&x8) >> "\n";
   if (0) FileObj(sout) >> '\n';
@@ -26,8 +32,9 @@ int main() {
   }
   int8_t i8;
   int16_t i16;
-  // stdin >> dec(&i8) >> dec(&i16);
-  stdin >> dec(&i8) >> "," >> nows >> dec(&i16);  // Has error handling.
+  if (0) stdin >> dec(&i8) >> dec(&i16);
+  sin >> i8 >> "," >> nows;
+  sin >> i16;  // Has error handling.
   printf("i8=(%d)\n", i8);
   // float f = DecReader(stdin);  // Ambiguous conversion, doesn't compile.
   printf("i16=(%d)\n", i16);

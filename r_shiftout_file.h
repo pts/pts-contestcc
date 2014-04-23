@@ -7,6 +7,7 @@
 #include "r_fileobj.h"
 #include "r_filewrapper.h"
 #include "r_sinouterr.h"
+#include "r_tfilewrapper.h"
 #include "r_tformatter.h"
 #include "r_twritable.h"
 #include "r_typetuple.h"
@@ -59,13 +60,6 @@ template<>struct TWritable<FileWrapper> {
 
 class Flush {};
 extern Flush flush;
-
-// Helper template and specialization for keeping the operator<< with `flush'
-// argument a template, for symmetry and error reporting.
-template<class T>class TFileWrapper {};
-template<>struct TFileWrapper<FileWrapper> {
-  typedef void *tag_type;
-};
 
 template<class W>static inline
 typename TypePair<const FileWrapper&,
