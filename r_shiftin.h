@@ -1,4 +1,6 @@
+// TODO(pts): Add reading until EOF.
 // TODO(pts): Add reading of floating point types.
+// TODO(pts): Add stripping whitespace: rstrip and lstrip.
 // TODO(pts): Implement write_hex etc.
 // TODO(pts): wrap(stdin) instead of `FileWrapper(stdin) >> stdin'.
 // TODO(pts): Move literal, dec etc. to a namespace.
@@ -26,6 +28,10 @@
 
 #include <string>
 
+class FileObj;  // A forward-declaration is good enough.
+
+// --- Reading a word.
+
 // TODO(pts): Make input parsing more generic, i.e. make it work on
 // std::string. This is a lot of work and can lead to code duplication,
 // because we want to make the FILE* path fast.
@@ -35,6 +41,23 @@
 
 Status read_word(FILE *f, std::string *out);
 std::string read_word(FILE *f);  // With error handling.
+
+// TODO(pts): Move this class and some others to r::internal.
+class WordIn {
+ public:
+  typedef void *read_type;
+  typedef void *reader_type;
+  inline explicit WordIn(std::string *word): word_(word) {}
+  inline Status read(FILE *f) const {
+    return read_word(f, word_);
+  }
+ private:
+  std::string * const word_;
+};
+
+static inline WordIn word(std::string *line) { return WordIn(line); }
+
+// ---
 
 // Ignores optional whitespace in front of the number.
 Status read_dec(FILE *f, unsigned nbytes, int64_t *out);
@@ -382,7 +405,6 @@ operator>>(FILE *f, const V &v) {
 
 // --- Reading from FileObj.
 
-class FileObj;  // A forward-declaration is good enough.
 template<class T>class TFileObj {};
 template<>struct TFileObj<FileObj> { typedef void *tag_type; };
 
