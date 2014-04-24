@@ -37,10 +37,10 @@ Status read_word(FILE *f, std::string *out);
 std::string read_word(FILE *f);  // With error handling.
 
 // Ignores optional whitespace in front of the number.
-//
-// TODO(pts): Implement smaller versions.
-Status read_dec(FILE *f, int nbytes, int64_t *out);
-Status read_dec(FILE *f, int nbytes, uint64_t *out);
+Status read_dec(FILE *f, unsigned nbytes, int64_t *out);
+Status read_dec(FILE *f, unsigned nbytes, uint64_t *out);
+Status read_dec(FILE *f, unsigned nbytes, int32_t *out);
+Status read_dec(FILE *f, unsigned nbytes, uint32_t *out);
 
 // Helper class.
 class DecReader {
@@ -84,10 +84,10 @@ template<>struct TIntegerSizeReader<1> {
   typedef int8_t    signed_type;
   // TODO(pts): Probably handle Status in the .cc file, and use void here.
   static inline void t_read_dec(FILE *f, unsigned_type *out) {
-    uint64_t u64; read_dec(f, 1, &u64); *out = u64;
+    uint32_t u32; read_dec(f, 1, &u32); *out = u32;
   }
   static inline void t_read_dec(FILE *f, signed_type *out) {
-    int64_t  i64; read_dec(f, 1, &i64); *out = i64;
+    int32_t  i32; read_dec(f, 1, &i32); *out = i32;
   }
 };
 
@@ -95,10 +95,10 @@ template<>struct TIntegerSizeReader<2> {
   typedef uint16_t unsigned_type;
   typedef int16_t    signed_type;
   static inline void t_read_dec(FILE *f, unsigned_type *out) {
-    uint64_t u64; read_dec(f, 2, &u64); *out = u64;
+    uint32_t u32; read_dec(f, 2, &u32); *out = u32;
   }
   static inline void t_read_dec(FILE *f, signed_type *out) {
-    int64_t  i64; read_dec(f, 2, &i64); *out = i64;
+    int32_t  i32; read_dec(f, 2, &i32); *out = i32;
   }
 };
 
@@ -106,10 +106,10 @@ template<>struct TIntegerSizeReader<4> {
   typedef uint32_t unsigned_type;
   typedef int32_t    signed_type;
   static inline void t_read_dec(FILE *f, unsigned_type *out) {
-    uint64_t u64; read_dec(f, 4, &u64); *out = u64;
+    uint32_t u32; read_dec(f, 4, &u32); *out = u32;
   }
   static inline void t_read_dec(FILE *f, signed_type *out) {
-    int64_t  i64; read_dec(f, 4, &i64); *out = i64;
+    int32_t  i32; read_dec(f, 4, &i32); *out = i32;
   }
 };
 

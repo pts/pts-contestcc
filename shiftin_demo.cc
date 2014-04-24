@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
     int16_t i16; sin >> i16;  // DecIn.
   }
   if (argc < 0) {
+    int32_t i32; sin >> i32;  // DecIn.
     uint64_t u64; sin >> u64;  // DecIn.
   }
   sout << "Hi, what's your name?" << endl;

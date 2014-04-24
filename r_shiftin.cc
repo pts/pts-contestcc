@@ -1,5 +1,6 @@
 #include "r_shiftin.h"
 
+//#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -38,7 +39,8 @@ std::string read_word(FILE *f) {
   return result;
 }
 
-Status read_dec(FILE *f, int nbytes, int64_t *out) {
+Status read_dec(FILE *f, unsigned nbytes, int64_t *out) {
+  //assert(nbytes <= 8);
   bool is_neg = false;
   int c;
   while ((c = getc(f)) >= 0 && is_whitespace(c)) {}
@@ -55,7 +57,6 @@ Status read_dec(FILE *f, int nbytes, int64_t *out) {
   while (is_digit(c = getc(f))) {
     const uint64_t n10 = 10 * n;
     const uint64_t n10c = n10 + c - '0';
-    // TODO(pts): Use faster implementation if nbytes < sizeof(int64_t).
     if (n10 / 10 != n || n10c < n10 || n10c > limit) {
       return "Out of bounds when reading signed decimal.";
     }
@@ -66,7 +67,8 @@ Status read_dec(FILE *f, int nbytes, int64_t *out) {
   return true;
 }
 
-Status read_dec(FILE *f, int nbytes, uint64_t *out) {
+Status read_dec(FILE *f, unsigned nbytes, uint64_t *out) {
+  //assert(nbytes <= 8);
   int c;
   while ((c = getc(f)) >= 0 && is_whitespace(c)) {}
   if (!is_digit(c)) {
@@ -78,11 +80,61 @@ Status read_dec(FILE *f, int nbytes, uint64_t *out) {
   while (is_digit(c = getc(f))) {
     const uint64_t n10 = 10 * n;
     const uint64_t n10c = n10 + c - '0';
-    // TODO(pts): Use faster implementation if nbytes < sizeof(int64_t).
     if (n10 / 10 != n || n10c < n10 || n10c > limit) {
       return "Out of bounds when reading unsigned decimal.";
     }
     n = n10c;
+  }
+  if (c >= 0) ungetc(c, f);
+  *out = n;
+  return true;
+}
+
+// Faster implementation (because of faster overflow checking) for <= 4 bytes.
+Status read_dec(FILE *f, unsigned nbytes, int32_t *out) {
+  //assert(nbytes <= 4);
+  bool is_neg = false;
+  int c;
+  while ((c = getc(f)) >= 0 && is_whitespace(c)) {}
+  if (c == '-') {
+    is_neg = true;
+    c = getc(f);
+  }
+  if (!is_digit(c)) {
+    if (c >= 0) ungetc(c, f);
+    return "EOF when reading signed decimal.";
+  }
+  uint32_t n = c - '0';
+  const uint64_t limit = ((uint64_t)1 << (8 * nbytes - 1)) - 1 + is_neg;
+  while (is_digit(c = getc(f))) {
+    const uint64_t n64 = 10 * (uint64_t)n + (c - '0');
+    if (n64 > limit) {
+      return "Out of bounds when reading signed decimal.";
+    }
+    n = n64;
+  }
+  if (c >= 0) ungetc(c, f);
+  *out = is_neg ? -n : n;
+  return true;
+}
+
+// Faster implementation (because of faster overflow checking) for <= 4 bytes.
+Status read_dec(FILE *f, unsigned nbytes, uint32_t *out) {
+  //assert(nbytes <= 4);
+  int c;
+  while ((c = getc(f)) >= 0 && is_whitespace(c)) {}
+  if (!is_digit(c)) {
+    if (c >= 0) ungetc(c, f);
+    return "EOF when reading unsigned decimal.";
+  }
+  uint32_t n = c - '0';
+  const uint64_t limit = (uint32_t)~0 >> (64 - 8 * nbytes);
+  while (is_digit(c = getc(f))) {
+    const uint64_t n64 = 10 * (uint64_t)n + (c - '0');
+    if (n64 > limit) {
+      return "Out of bounds when reading unsigned decimal.";
+    }
+    n = n64;
   }
   if (c >= 0) ungetc(c, f);
   *out = n;
@@ -138,7 +190,7 @@ Status read_line(FILE *f, std::string *line) {
   while ((c = getc(f)) >= 0) {
     line->push_back(c);
     if (c == '\n') {
-      // Not by default. TODO(pts): Add another reader.
+      // Not by default. TODO(pts): Add another reader for that.
       //if (!line->empty() && (*line)[line->size() - 1] == '\r') {
       //  line->resize(line->size() - 1);
       //}
