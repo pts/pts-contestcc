@@ -7,18 +7,21 @@ CXXFLAGS = -s -O2 -W -Wall
 CXX = g++
 
 .PHONY: all clean
+.SUFFIXES:  # Disable built-in rules.
 
 all: libr.a $(BINARIES)
 
 clean:
 	rm -f core *.o libr.a $(BINARIES)
 
+$(OBJS): $(HEADERS)
+
 libr.a: $(OBJS)
 	rm -f $@
 	ar cr $@ $(OBJS)
 	ranlib $@
 
-%.o: %.c $(HEADERS)
+%.o: %.cc
 	$(CXX) $(CXXFLAGS) -c $<
 
 shiftin_demo: shiftin_demo.cc libr.a $(HEADERS)
