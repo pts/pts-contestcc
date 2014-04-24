@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+namespace r {
+
 void format_i32(int32_t v, char *buf) {
   // Formats in decimal.
   char *p = buf, *q, c;
@@ -144,3 +146,5 @@ void TFormatter<long double>::format(long double v, char *buf) {
   if (!strchr(buf, '.') && !strchr(buf, 'e')) strcat(buf, ".");
 }
 #endif
+
+}  // namespace r

@@ -1,5 +1,6 @@
-#include "r_shiftin.h"
-#include "r_shiftout.h"
+#include "r.h"
+
+int char1 = 42;  // Masks r::char1.
 
 int main(int argc, char **argv) {
   (void)argv;

@@ -1,12 +1,10 @@
 #ifndef R_STR_PIECE_H
 #define R_STR_PIECE_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include <stdint.h>
 #include <string.h>
+
+namespace r {
 
 struct StrPiece {
   inline StrPiece(const char *data): data(data), size(strlen(data)) {}
@@ -15,5 +13,7 @@ struct StrPiece {
   const char *data;
   uintptr_t size;
 };
+
+}  // namespace r
 
 #endif  // R_STR_PIECE_H

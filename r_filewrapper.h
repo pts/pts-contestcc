@@ -1,11 +1,9 @@
 #ifndef R_FILEWRAPPER_H
 #define R_FILEWRAPPER_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include <stdio.h>
+
+namespace r {
 
 // A low-overhead wrapper struct for a FILE*.
 //
@@ -19,4 +17,6 @@ class FileWrapper {
   FILE *f;
 };
 
-#endif  // R_FILEWRAPPER
+}  // namespace r
+
+#endif  // R_FILEWRAPPER_H

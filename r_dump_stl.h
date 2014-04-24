@@ -1,10 +1,6 @@
 #ifndef R_DUMP_STL_H
 #define R_DUMP_STL_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include <deque>
 #include <list>
 #include <map>
@@ -29,6 +25,8 @@
 #endif
 
 #include "r_dump.h"
+
+namespace r {
 
 template<class T>static inline void wrdump_map(const T &v, std::string *out) {
   out->push_back('{');
@@ -241,5 +239,7 @@ template<class T>struct TDumper<std::unordered_multiset<T> > {
 };
 
 #endif  // C++0x and C++11
+
+}  // namespace r
 
 #endif  // R_DUMP_STL_H

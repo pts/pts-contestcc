@@ -7,10 +7,6 @@
 #ifndef R_DUMP_H
 #define R_DUMP_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include "r_shiftout.h"
 #include "r_strpiece.h"
 #include "r_tformatter_basic.h"
@@ -23,6 +19,8 @@
 #include "r_dump_basic.h"
 #include "r_strmsg.h"
 #include "r_typetuple.h"
+
+namespace r {
 
 // We don't care too much about performane (hence no `static inline' for
 // functions etc.), because dumping is for debugging.
@@ -215,5 +213,7 @@ template<class T1, class T2, class T3, class T4>void dump(const StrMsg &msg, con
 // TODO(pts): Add proper SFINAE and also to the 1-arg StrMsg for early discovery
 // of unimplemented dumpers. (Can't discover recursively.)
 template<class T>Dumper<T> dump(const T &t) { return Dumper<T>(t); }
+
+}  // namespace r
 
 #endif  // R_DUMP_H

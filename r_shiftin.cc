@@ -6,6 +6,8 @@
 
 #include <string>
 
+namespace r {
+
 static inline bool is_whitespace(int c) {
   return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
@@ -233,3 +235,5 @@ Status read_bool(FILE *f, bool *out) {
   *out = v;
   return true;
 }
+
+}  // namespace r

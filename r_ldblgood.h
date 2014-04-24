@@ -1,9 +1,7 @@
 #ifndef R_LDBL_GOOD_H
 #define R_LDBL_GOOD_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
+namespace r {
 
 // printf on Win32 doesn't support long double, but __mingw_sprintf does if
 // compiling with MinGW. So we use it. Cygwin printf is good for long double.
@@ -15,5 +13,7 @@
 #else
 #define LDBL_GOOD(x) x
 #endif
+
+}  // namespace r
 
 #endif  // R_LDBL_GOOD_H

@@ -1,9 +1,7 @@
 #ifndef R_DIE_H
 #define R_DIE_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
+namespace r {
 
 void die(const char *msg);
 
@@ -18,5 +16,7 @@ template<class T>static inline const T *notnull(const T *t) {
 }
 
 #define assume_notnull(t) (t)
+
+}  // namespace r
 
 #endif  // R_DIE_H

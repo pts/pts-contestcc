@@ -10,6 +10,8 @@
 #include "r_twritable.h"
 #include "r_typetuple.h"
 
+namespace r {
+
 // Helper function for shiftout concatenation, e.g. `cat() << "answer=" << 42'
 // or `cat("answer=") << 42'. Please don't call cat with an actual `string&' or
 // `const string&'.
@@ -182,5 +184,7 @@ operator<<(std::string &wstr, const V &v) {
   v.format_append(&wstr);  // Optimized implementation.
   return wstr;
 }
+
+}  // namespace r
 
 #endif // R_SHIFTOUT_BASE_H

@@ -1,11 +1,9 @@
 #ifndef R_SINOUTERR_H
 #define R_SINOUTERR_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include <stdio.h>
+
+namespace r {
 
 struct Sin { inline operator FILE*() const { return stdin; } };
 #ifdef __GNUC__
@@ -33,5 +31,7 @@ template<class T>class TStdStream {};
 template<>struct TStdStream<Sin>  { typedef void *tag_type; };
 template<>struct TStdStream<Sout> { typedef void *tag_type; };
 template<>struct TStdStream<Serr> { typedef void *tag_type; };
+
+}  // namespace r
 
 #endif  // R_SINOUTERR_H

@@ -1,4 +1,4 @@
-#include "r_shiftout.h"
+#include "r.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -27,6 +27,7 @@ class D {
   }
 };
 
+namespace r {
 template<>class TFormatter<const C&> {
  public:
   typedef void *tag_type;
@@ -35,6 +36,7 @@ template<>class TFormatter<const C&> {
     out->append("C()");
   }
 };
+}  // namespace r
 
 int main() {
   // TODO(pts): Which of these does error checking?

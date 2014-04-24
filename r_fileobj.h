@@ -1,15 +1,13 @@
 #ifndef R_FILEOBJ_H
 #define R_FILEOBJ_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include "r_status.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+namespace r {
 
 class FileObj {
  public:
@@ -31,5 +29,7 @@ class FileObj {
  private:
   FILE *f_;  // Owned externally.
 };
+
+}  // namespace r
 
 #endif // R_FILEOBJ_H

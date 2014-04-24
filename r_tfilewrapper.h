@@ -1,9 +1,7 @@
 #ifndef R_TFILEWRAPPER_H
 #define R_TFILEWRAPPER_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
+namespace r {
 
 class FileWrapper;
 
@@ -12,6 +10,6 @@ class FileWrapper;
 template<class T>class TFileWrapper {};
 template<>struct TFileWrapper<FileWrapper> { typedef void *tag_type; };
 
+}  // namespace r
+
 #endif  // R_TFILEWRAPPER_H
-
-

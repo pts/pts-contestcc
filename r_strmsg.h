@@ -1,14 +1,12 @@
 #ifndef R_STRMSG_H
 #define R_STRMSG_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include <stdint.h>
 #include <string.h>
 
 #include <string>
+
+namespace r {
 
 class StrMsg {
  public:
@@ -20,5 +18,7 @@ class StrMsg {
   const char *data;
   uintptr_t size;
 };
+
+}  // namespace r
 
 #endif  // R_STRMSG_H

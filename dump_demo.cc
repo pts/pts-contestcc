@@ -1,9 +1,8 @@
 #include <stdint.h>
 
-#include "r_dump.h"
+#include "r.h"
 #include "r_dump_stl.h"
 
-// TODO(pts): Add a separator.
 #define DUMP(type) dump(#type ": ", (type)(0))
 
 // TODO(pts): Add a custom class which is actually dumpable.

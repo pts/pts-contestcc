@@ -1,16 +1,14 @@
 #ifndef R_TFORMATTER_BASIC_H
 #define R_TFORMATTER_BASIC_H 1
 
-#ifndef __cplusplus
-#error This is a C++ header.
-#endif
-
 #include <string.h>
 
 #include <string>
 
 #include "r_strpiece.h"
 #include "r_tformatter.h"
+
+namespace r {
 
 template<>class TFormatter<bool> {
  public:
@@ -134,5 +132,7 @@ template<>class TFormatter<StrPiece> {
     return v;
   }
 };
+
+}  // namespace r
 
 #endif // R_TFORMATTER_BASIC_H

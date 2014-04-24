@@ -12,6 +12,10 @@
 #include "r_twritable.h"
 #include "r_typetuple.h"
 
+// TODO(pts): Does calling ferror autoflush? If so, disable it.
+
+namespace r {
+
 class FileShiftout {
  public:
   // Unfortunately we need these Sin, Sout, Serr constructors for `operator<<'
@@ -115,5 +119,7 @@ operator<<(const FileShiftout &fwr, const V &v) {
   wr << v;
   return wr;
 }
+
+}  // namespace r
 
 #endif  // R_SHIFTOUT_FILE_H

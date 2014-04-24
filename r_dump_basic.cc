@@ -5,6 +5,8 @@
 #include "r_die.h"
 #include "r_dump.h"
 
+namespace r {
+
 void wrdump_low(char v, std::string *out) {
   char buf[6], *p = buf;
   *p++ = '\'';
@@ -114,3 +116,5 @@ void wrdump_low(const std::string &v, std::string *out) {
 void wrdump_low(const char *v, std::string *out) {
   return wrdump_piece(v, strlen(v), out);
 }
+
+}  // namespace r
