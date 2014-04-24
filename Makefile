@@ -1,6 +1,6 @@
 OBJS = r_die.o r_shiftin.o r_shiftout_file.o r_tformatter_basic.o \
     r_dump_basic.o
-BINARIES = shiftin_demo formatter_demo dump_demo
+BINARIES = shiftin_demo formatter_demo dump_demo hello_demo
 HEADERS = $(wildcard r_*.h)
 
 CXXFLAGS = -s -O2 -W -Wall
@@ -31,4 +31,7 @@ formatter_demo: formatter_demo.cc libr.a $(HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lr
 
 dump_demo: dump_demo.cc libr.a $(HEADERS)
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lr
+
+hello_demo: hello_demo.cc libr.a $(HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lr
